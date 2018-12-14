@@ -50,6 +50,9 @@ Finally all the files in the three directories are very small XML fragments : co
 extended -> <ExtendedProperties>, localized -> <LocalizedProperties>
 Files content encoding is very likely of the UTF-8 kind.
 
+For MSU files we dissected, file names in the PACKAGE and WSUSSCAN directories are matching 1 to 1, both at
+filename and at content level. Hence only one of the directory needs to be processed.
+
 A1) Extraction script
 =====================
 SET EXPANDER=C:\Program Files\7-Zip\7z.exe
