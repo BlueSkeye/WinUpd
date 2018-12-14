@@ -1,0 +1,75 @@
+﻿Reference materials and othe documents
+======================================
+https://msfn.org/board/topic/175704-windows-update-package-structure-analysis/
+https://borncity.com/win/2016/10/21/windows-updates-fehlende-deinstallation-erzwingen/
+
+An example script below. Notice the special way we extract the _manifest_.cix.xml file at the end.
+This is beacause the EXPAND.EXE doesn't extract this file for whatever reason.
+
+Lexicon
+=======
+IPD : Intra Package Delta. Also known as PA30 format.
+MUM : Microsoft Update Manifest (https://en.wikipedia.org/wiki/Windows_Update)
+PA30 : See IPD.
+
+1) MSU 10K feets structure
+==========================
+The MSU file is a ZIP file with 4 files in it.
+*_PSFX.cab
+*_PSFX.xml
+*-pkgproperties_PSFX.txt
+WSUSSCAN.cab
+
+1.1) Package properties file
+----------------------------
+A small key=value file that summarize the target OSes and processor architecture, build date, KB article,
+installer engine and other minor information.
+
+1.2) PSFX.xml file
+------------------
+Largely useless. It references the PSFX.cab file and provides some minor information albeit perhaps a public
+key token that is probably related to some kind of digital signature.
+
+1.3) The .cab files
+-------------------
+These are special kind of CAB files using the IPD format. 7-zip doesn't support it, nor does some version of
+the EXPAND utility. So we need a suitable version of EXPAND or a custom extraction tool.
+
+2) WSUSSCAN cab file
+====================
+This file expands into two other cab files which in turn provide two similar trees with 3 sub-directories :
+(core, extended, localized) and a package.xml file a couple of hundred Kbytes long.
+
+The core and extended directories contain a couple thousand files numbered from 0 upward with no hole.
+The localized directory is further divided in globalization related sub-directories which contain files
+using the same numbering schemen albeit with some numbers missing. However, none of those files have a number
+greater than any of the ones in the core and extended directories. This suggest some but not all of the
+core/extended directory files require localization.
+
+Finally all the files in the three directories are very small XML fragments : core -> <UpdateIdentity>,
+extended -> <ExtendedProperties>, localized -> <LocalizedProperties>
+Files content encoding is very likely of the UTF-8 kind.
+
+A1) Extraction script
+=====================
+SET EXPANDER=C:\Program Files\7-Zip\7z.exe
+SET DESKTOP=%USERPROFILE%\Desktop
+SET INFILE=%DESKTOP%\WinUpdate2018-12-12.msu
+SET TARGETDIR=%TEMP%\WinUpdate20181212
+IF NOT EXIST "%TARGETDIR%" MKDIR "%TARGETDIR%"
+
+"%EXPANDER%" x "%INFILE%" -bt -bb3 -o"%TARGETDIR%"
+CD "%TARGETDIR%"
+MKDIR WSUSSCAN
+EXPAND.EXE "WSUSSCAN.cab" "WSUSSCAN"
+CD WSUSSCAN
+MKDIR PACKAGE
+EXPAND.EXE "PACKAGE.cab" -F:* "PACKAGE"
+MKDIR WSUSSCAN
+EXPAND.EXE "WSUSSCAN.cab" -F:* "WSUSSCAN"
+CD ..
+MKDIR PSFX
+EXPAND.EXE "*_PSFX.cab" -F:* "PSFX"
+EXPAND.EXE "*_PSFX.cab" -F:_manifest_.cix.xml "PSFX"
+"%EXPANDER%" x *_PSFX.cab -bt -bb3 -oPSFX _manifest_.cix.xml
+
