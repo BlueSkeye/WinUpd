@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace WinUpdExplorer
 {
@@ -10,25 +9,22 @@ namespace WinUpdExplorer
     {
         public static int Main(string[] args)
         {
+            Initialize();
             // bool allConjectureStand = WsusScanParallelContentConjecture();
+            ReadPackage();
             return 0;
         }
 
-        private static bool WsusScanParallelContentConjecture()
+        private static bool BuffersMatch(byte[] x, byte[] y)
         {
-            DirectoryInfo baseDirectory = new DirectoryInfo(
-                Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "Temp", "WinUpdate20181212", "WSUSSCAN"));
-            DirectoryInfo packageDirectory = new DirectoryInfo(
-                Path.Combine(baseDirectory.FullName, "PACKAGE"));
-            DirectoryInfo wsusscanDirectory = new DirectoryInfo(
-                Path.Combine(baseDirectory.FullName, "PACKAGE"));
-            if (!packageDirectory.FilesAreSubsetOf(wsusscanDirectory)) {
+            if (x.Length != y.Length) {
                 return false;
             }
-            if (!wsusscanDirectory.FilesAreSubsetOf(packageDirectory)) {
-                return false;
+            int length = x.Length;
+            for(int index = 0; index < length; index++) {
+                if (x[index] != y[index]) {
+                    return false;
+                }
             }
             return true;
         }
@@ -79,18 +75,48 @@ namespace WinUpdExplorer
             return true;
         }
 
-        private static bool BuffersMatch(byte[] x, byte[] y)
+        private static void Initialize()
         {
-            if (x.Length != y.Length) {
+            _baseDirectory = new DirectoryInfo(
+                Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "Temp", "WinUpdate20181212", "WSUSSCAN"));
+            _packageDirectory = new DirectoryInfo(Path.Combine(_baseDirectory.FullName, "PACKAGE"));
+            _wsusscanDirectory = new DirectoryInfo(Path.Combine(_baseDirectory.FullName, "WSUSSCAN"));
+        }
+
+        private static void ReadPackage()
+        {
+            XmlSerializer serializer = new XmlSerializer(typeof(Package));
+            serializer.UnknownNode += new XmlNodeEventHandler(delegate (object sender, XmlNodeEventArgs e) {
+                return;
+            });
+            serializer.UnknownAttribute += new XmlAttributeEventHandler(delegate (object sender, XmlAttributeEventArgs e) {
+                return;
+            });
+            using (FileStream input = File.OpenRead(Path.Combine(_wsusscanDirectory.FullName, "package.xml"))) {
+                _package = (Package)serializer.Deserialize(input);
+            }
+            return;
+        }
+
+        /// <summary>Verify the WSUSSCAN and PACKAGE directories are mirror and contain the exact
+        /// same files and content.</summary>
+        /// <returns></returns>
+        private static bool WsusScanParallelContentConjecture()
+        {
+            if (!_packageDirectory.FilesAreSubsetOf(_wsusscanDirectory)) {
                 return false;
             }
-            int length = x.Length;
-            for(int index = 0; index < length; index++) {
-                if (x[index] != y[index]) {
-                    return false;
-                }
+            if (!_wsusscanDirectory.FilesAreSubsetOf(_packageDirectory)) {
+                return false;
             }
             return true;
         }
+
+        private static DirectoryInfo _baseDirectory;
+        private static Package _package;
+        private static DirectoryInfo _packageDirectory;
+        private static DirectoryInfo _wsusscanDirectory;
     }
 }
