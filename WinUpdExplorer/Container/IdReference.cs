@@ -1,7 +1,8 @@
-﻿using System.Xml;
+﻿using System;
+using System.Xml;
 using System.Xml.Serialization;
 
-namespace WinUpdExplorer
+namespace WinUpdExplorer.Container
 {
     public class IdReference
     {
@@ -11,7 +12,7 @@ namespace WinUpdExplorer
 
     public class UpdateIdReference
     {
-        [XmlAttribute()]
-        public string Id { get; set; }
+        [XmlAttribute("Id")]
+        public Guid Id { get; set; }
     }
 }

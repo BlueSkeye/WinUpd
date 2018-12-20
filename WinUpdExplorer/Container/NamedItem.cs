@@ -1,7 +1,7 @@
 ﻿using System.Xml;
 using System.Xml.Serialization;
 
-namespace WinUpdExplorer
+namespace WinUpdExplorer.Container
 {
     public class NamedItem
     {

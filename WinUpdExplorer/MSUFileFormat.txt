@@ -1,5 +1,6 @@
 ﻿Reference materials and othe documents
 ======================================
+https://docs.microsoft.com/en-us/windows/deployment/update/how-windows-update-works
 https://msfn.org/board/topic/175704-windows-update-package-structure-analysis/
 https://borncity.com/win/2016/10/21/windows-updates-fehlende-deinstallation-erzwingen/
 
@@ -34,6 +35,11 @@ key token that is probably related to some kind of digital signature.
 -------------------
 These are special kind of CAB files using the IPD format. 7-zip doesn't support it, nor does some version of
 the EXPAND utility. So we need a suitable version of EXPAND or a custom extraction tool.
+There is a Microsoft API for delta compression which is documented here :
+https://msdn.microsoft.com/en-us/library/bb417345.aspx?ranMID=43674&ranEAID=je6NUbpObpQ&ranSiteID=je6NUbpObpQ-sENKs7JdfZluPHIG1cPAsg&epi=je6NUbpObpQ-sENKs7JdfZluPHIG1cPAsg&irgwc=1&OCID=AID681541_aff_7795_1243925&tduid=(ir__cychvvkmz3neoadomtu0kkweyf2xhygiar0ax3e600)(7795)(1243925)(je6NUbpObpQ-sENKs7JdfZluPHIG1cPAsg)()&irclickid=_cychvvkmz3neoadomtu0kkweyf2xhygiar0ax3e600
+https://patents.google.com/patent/US20070260653
+https://reverseengineering.stackexchange.com/questions/6228/how-do-the-internals-of-a-windows-update-security-patch-work
+https://github.com/smx-smx/wcpex/blob/master/wcpex.c
 
 2) WSUSSCAN cab file
 ====================
@@ -53,8 +59,41 @@ Files content encoding is very likely of the UTF-8 kind.
 For MSU files we dissected, file names in the PACKAGE and WSUSSCAN directories are matching 1 to 1, both at
 filename and at content level. Hence only one of the directory needs to be processed.
 
+2.1) Package.xml file
+=====================
+This XML document is the full set of updates published since 28/02/2004. Each update is defined
+by an element having a unique GUID identifier and may require one or more prerequisites (older
+updates) as defined by an inner element.
+Amongst the <update> element attribute is the RevisionId one which is a unique increasing
+decimal number. This number will be used as a file name in the core/extended/localized directories.
+The RevisionId order does not reflect the creation date order.
+
+2.2) Update identity in WSUSCAN
+===============================
+The numbered files in the core/extended/localized directories under WSUSSCAN contain an XML
+fragment made of an <UpdateIdentity> element. There is a single <Update> that has a <PayloadFiles>
+sub-element. After the <Updates> collection, there is a <FileLocations> collection with
+<FileLocation> items. The Id attribute of this element MATCHES the one found in the File element
+of the PayloadFiles one. The Id value is the base64 encoded value of the SHA1 hash value of the 
+file. The associated URL is not one that is directly accessible from a browser. However the 
+last part (filename) is the one of the CAB file to be found in the MSU. The file name is of type
+platform_KBnumber_archi_PSFX.cab.
+
+PSFX manifest file
+===================
+YYY_XXX_TTT_ZZZ_none_UUU.manifest
+
+XXX = Update/Applicable/updateComponent/assemblyIdentity/@name
+YYY = Update/Applicable/updateComponent/assemblyIdentity/@processorAchitecture
+ZZZ = Update/Applicable/updateComponent/assemblyIdentity/@version
+TTT = Update/Applicable/updateComponent/assemblyIdentity/@publicKeyToken
+
+See Package_545_for_KB4471332 for example
+
 A1) Extraction script
 =====================
+See Ignite.cmd file
+
 SET EXPANDER=C:\Program Files\7-Zip\7z.exe
 SET DESKTOP=%USERPROFILE%\Desktop
 SET INFILE=%DESKTOP%\WinUpdate2018-12-12.msu
@@ -73,6 +112,288 @@ EXPAND.EXE "WSUSSCAN.cab" -F:* "WSUSSCAN"
 CD ..
 MKDIR PSFX
 EXPAND.EXE "*_PSFX.cab" -F:* "PSFX"
-EXPAND.EXE "*_PSFX.cab" -F:_manifest_.cix.xml "PSFX"
 "%EXPANDER%" x *_PSFX.cab -bt -bb3 -oPSFX _manifest_.cix.xml
 
+
+
+First of all, Windows 6.x and later updates are deployed in .cab format.
+Inside the cab file there must be a file named: _manifest_.cix.xml
+Take a look inside this file with IE preferably:
+
+It starts with something like:
+<?xml version="1.0" encoding="UTF-8"?>
+<Container name="windows6.1-kb958559-x64-refreshpkg.cab" type="CAB" length="19070059" version="1" xmlns="urn:ContainerIndex"><Description/>
+
+Each file is then registered in another XML section called <Files>.
+Two primary examples:
+<File length="1872" name="x86_microsoft-windows-virtualpc-additions_31bf3856ad364e35_7.1.7600.16393_none_fa50c45d13592d39.manifest" attr="32" time="128981427337272897" id="1143"><Delta><Source type="RAW" name="x86_microsoft-windows-virtualpc-additions_31bf3856ad364e35_7.1.7600.16393_none_fa50c45d13592d39.manifest"/></Delta></File>
+<File length="5888" name="amd64_wvpchbus.inf_31bf3856ad364e35_7.1.7601.17514_none_435a07889c1e3a43\wvpchbus.inf" attr="32" time="129347010400000000" id="1116"><Delta><Source type="PA30" name="0"/></Delta></File>
+<File length="5888" name="amd64_wvpchbus.inf_31bf3856ad364e35_7.1.7600.16393_none_411c23409f399fec\wvpchbus.inf" attr="32" time="128981427800274961" id="1115"><Delta><Source type="PA30" name="1"/><Basis file="1116"/></Delta></File>
+
+Source type: RAW or PA30. RAW means that no delta-compression is implemented. PA30 means that the file in the cab file is a delta.
+Time: A 64-bit time stamp. Shows Win32 FILETIME values count 100-nanosecond intervals since January 1, 1600 UTC. More info: https://blogs.msdn.microsoft.com/oldnewthing/20030905-02/?p=42653
+ID: A number identifying the source file in the update package (it is just an index number).
+name: An index value for the PA30. 0 means first delta, 1 second delta to process and so on. Respective deltas are named the same way in the cab file.
+
+<Basis file="1116"/> Not sure what this means, some more research required.
+<Basis file="1116"/> Not sure what this means, some more research required.
+
+Maybe it is just the ID of the first delta? Interesting information about the windows updates anyway.
+By the way by updates we mean the .msu files?
+It's not just the ID of the first delta, it changes throughout the xml file. I will closely examine this.
+In most cases it is the ID of the previous delta in the XML.
+This is not the case with some language-specific resource files, however.
+MSU is an MsZIP archive containing 4 files: a txt, an xml, the wsusscan.cab and the main cab file.
+We use the term update referring to both the MSU and Main CAB file.
+The update package per se is the Main CAB file, while the MSU is its Windows Update bundle.
+
+Anyway, let's return to the package analysis.
+After specifiying everything, the package container manifest ends like:
+
+</Files></Container>
+
+Now, how are all the files copied and how are windows update registry entries added?
+The .mum and .manifest files do this. Instead of having a single update.inf it's now much more complicated.
+Example of a .manifest file (with comments):
+
+<?xml version="1.0" encoding="UTF-8"?> ;Introduction
+<assembly xmlns="urn:schemas-microsoft-com:asm.v3" manifestVersion="1.0" copyright="Copyright (c) Microsoft Corporation. All Rights Reserved.">
+
+;Specify assembly identity as the name of its winsxs folder: Architecture_Name_PublicKeyToken_version_locale
+;IMPORTANT: You cannot change the CAT signature vendor like I did in XP USP4! You must use MS-provided CAT files to install file with the same publickeytoken.
+  <assemblyIdentity name="vpcusb.inf.Resources" version="7.1.7600.16393" processorArchitecture="amd64" language="da-DK" buildType="release" publicKeyToken="31bf3856ad364e35" versionScope="nonSxS" />
+;XML section for file copying:
+;file name destinationPath sourcename and sourcepath importPath
+;file name: target file name in winsxs
+;destinationPath: directory to update with the file. We've lost the simplicity of the LDIDs in INF files. Special directories are designated by $(runtime.xxx) string.
+;Examples: $(runtime.drivers), $(runtime.help), $(runtime.system32) More examples could be added here.
+;sourcename and sourcepath: Undocumented, use only if there is a different file name definition in package container XML.
+;importpath: Undocumented, reverse engineering required to properly understand this. Probably $(build.nttree) represents a temporary location where the delta files are extracted along with the other stuff.
+;destinationPath
+  <file name="vpcusb.inf_loc" destinationPath="$(runtime.system32)\DriverStore\da-DK\" sourceName="" sourcePath=".\" importPath="$(build.nttree)\loc\da-dk\mui_infs\vpc\">
+;Security desciptor for SFC. Some reverse engineering will be required for further options.
+    <securityDescriptor name="WRP_FILE_DEFAULT_SDDL" />
+;Verification hashes - section start.
+    <asmv2:hash xmlns:asmv2="urn:schemas-microsoft-com:asm.v2">
+      <dsig:Transforms xmlns:dsig="http://www.w3.org/2000/09/xmldsig#">
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+;Uses SHA256 for validation.
+;Also must be CAT signed with MS certificate.
+      <dsig:DigestMethod xmlns:dsig="http://www.w3.org/2000/09/xmldsig#" Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+;BASE64 digest value (SHA256 algorithm)
+      <dsig:DigestValue xmlns:dsig="http://www.w3.org/2000/09/xmldsig#">xVT51HPqzn0ICbhyK392n198mRihDDTh5yd3muBYZrA=</dsig:DigestValue>
+    </asmv2:hash>
+  </file>
+;Specify file info for validation (copy of the previous line)
+  <file name="vpcusb.sys.mui" destinationPath="$(runtime.drivers)\da-DK\" sourceName="" sourcePath=".\" importPath="$(build.nttree)\loc\da-dk\vpc\">
+    <securityDescriptor name="WRP_FILE_DEFAULT_SDDL" />
+    <asmv2:hash xmlns:asmv2="urn:schemas-microsoft-com:asm.v2">
+      <dsig:Transforms xmlns:dsig="http://www.w3.org/2000/09/xmldsig#">
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod xmlns:dsig="http://www.w3.org/2000/09/xmldsig#" Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue xmlns:dsig="http://www.w3.org/2000/09/xmldsig#">2cJBTne143cft9wMNmJ3b+AEwdV3Tk70cNB59wx71pM=</dsig:DigestValue>
+    </asmv2:hash>
+  </file>
+;ACL codes for the winsxs assembly as a whole- Do not touch these
+;Operationhint set to "replace" to replace any existing ACL.
+  <trustInfo> ;Designates start of trust info specification section.
+    <security>
+      <accessControl>
+        <securityDescriptorDefinitions>
+          <securityDescriptorDefinition name="WRP_FILE_DEFAULT_SDDL" sddl="O:S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464G:S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464D:P(A;;FA;;;S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464)(A;;GRGX;;;BA)(A;;GRGX;;;SY)(A;;GRGX;;;BU)S:(AU;FASA;0x000D0116;;;WD)" operationHint="replace" />
+        </securityDescriptorDefinitions>
+      </accessControl>
+    </security>
+  </trustInfo>
+  <rescache xmlns="urn:schemas-microsoft-com:rescache.v1" />
+</assembly>
+
+Other sections you could find in manifests:
+
+- Service creation (as you know drivers are services):
+
+  <memberships>
+    <categoryMembership>
+      <id name="Microsoft.Windows.Categories.Services" version="6.1.7600.16393" publicKeyToken="31bf3856ad364e35" typeName="Service" />
+      <categoryInstance>
+
+;Specify data for service creation (it's should be rather straightforward)
+        <serviceData name="vpcvmm" displayName="@%SystemRoot%\system32\drivers\vpcvmm.sys,-100" errorControl="normal" imagePath="system32\drivers\vpcvmm.sys" start="system" type="kernelDriver" description="@%SystemRoot%\system32\drivers\vpcvmm.sys,-101" startAfterInstall="asynchronous" />
+      </categoryInstance>
+    </categoryMembership>
+    <categoryMembership>
+
+;Store it as boot critical service.
+      <id name="Microsoft.Windows.Categories" version="1.0.0.0" publicKeyToken="365143bb27e7ac8b" typeName="BootCritical" />
+    </categoryMembership>
+  </memberships>
+
+- Registry (it is straightforward)
+
+;In INF language: HKLM, "SOFTWARE\Microsoft\Assistance\Client\1.0\Namespaces\Windows\en-US\Titles","virtualpc",0,""
+
+;(Yeah I love Windows XP)
+
+<registryKeys>
+    <registryKey keyName="HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Assistance\Client\1.0\Namespaces\Windows\en-US\Titles" owner="false">
+      <registryValue name="virtualpc" valueType="REG_SZ" value="" operationHint="replace" owner="true" />
+      <securityDescriptor name="WRP_REGKEY_DEFAULT_SDDL" /> ;Undocumented; reversing required.
+    </registryKey>
+  </registryKeys>
+
+To be continued...
+
+P.S. For practice, try analyzing the manifests in Windows 7 SP1. Together we'll discover more stuff, more quickly.
+
+Windows Update package structure - Part 3: The MUM chaos
+========================================================
+
+As if the complexity of the manifest files was not enough, here comes the part that links the manifest files together: component-based servicing.
+Each manifest is named with the same name as its respective component-file folder in WinSxS. For example, a file named like aa.manifest means that all of its files are copied to winsxs\aa.
+The packages allow top-level interaction with servicing stack and Windows Update. The servicing stack creates a registry link between each package and components. The way it performs this link is not yet obvious to me. I suspect that the key to the connection is CAT files:  (See post #5 below to learn how MUM and MANIFEST files are linked).
+There exists 1 CAT file for each MUM file. Each CAT must at least contain the hash of each respective mum and have the same file name with it.
+However, some CAT files include more than one hashes. These correspond to the copied files and the MANIFEST files. A manifest file is thus linked to a MUM file, via its unique catalog file.
+Update.mum should start like:
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+;General, top-level info about the update package (useful for DISM, etc.)
+<assembly manifestVersion="1.0" description="Windows Virtual PC" displayName="Windows Virtual PC (KB958559)" company="Microsoft Corporation" copyright="Microsoft Corporation" supportInformation="http://support.microsoft.com/kb/958559" xmlns="urn:schemas-microsoft-com:asm.v3">
+;Microsoft-Windows-VirtualPC-Package-TopLevel-MergedCab is the name of the package
+;BuildType set to release in most packages
+;Be careful of the publicKeyToken.
+;DEFINITION of the update.mum package info. Be careful of the MergedCab designation in various update.mum packages.
+    <assemblyIdentity  buildType="release" language="neutral" name="Microsoft-Windows-VirtualPC-Package-TopLevel-MergedCab" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" version="7.1.7600.16393"/>
+;Package identifier is the KB number. Applicability evaluation controls the Windows Update detection system.
+;Sometimes the Permanence=Permanent designation is present, indicating that the update package will be marked as non-removable.
+;This XML section means that servicing stack will start processing the update.mum package prerequisites and install other packages.
+    <package identifier="KB958559" applicabilityEvaluation="deep" releaseType="Update" [Permanence="Permanent"]>
+        <parent>
+
+;Check for the presence of prerequisite parent packages.
+<assemblyIdentity name="Microsoft-Windows-UltimateEdition" version="6.1.7600.16385" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" buildType="release"></assemblyIdentity>
+
+;....Add more prerequisites here
+        </parent>
+
+;Specify the MUM packages this MUM will install:
+        <update name="Microsoft-Windows-VirtualPC-Package-TopLevel">
+            <package integrate="hidden"> ;Invisible to package manager (DISM)
+
+;Specifies the MUM info (name, processor, publicKeyToken, version) of the package to install
+; Now servicing stack will recursively process that MUM file, etc.
+                    <assemblyIdentity buildType="release" language="neutral" name="Microsoft-Windows-VirtualPC-Package-TopLevel" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" version="7.1.7600.16393"/>
+            </package>
+        </update>    
+        <update name="Microsoft-Windows-vpc-Package-SP1-Restore-Wrapper"> ;Usually a top level optional component package is followed by a respective 'wrapper'
+            <package integrate="hidden">
+                    <assemblyIdentity   language="neutral" name="Microsoft-Windows-vpc-Package-SP1-Restore-Wrapper" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" version="6.1.1.17514"/>
+            </package>
+        </update>    
+    </package>
+</assembly>
+
+Sometimes  MUM files do other stuff like driver installation:
+    <update name="vpcuxd_inf" restart="required">
+      <applicable disposition="staged"> ; Indicates that servicing stack should stage the driver update and add it to the pending.xml tasks list.
+        <updateDriver elevate="install">
+
+;In this example, the update that will be processed is not a MUM but a driver INF file (a driver package)
+;PublicKeyToken is vital because it identifies the signer.
+;Defines the driver update package info for the pending.xml
+          <assemblyIdentity buildType="release" language="neutral" name="vpcuxd.inf" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" type="driverUpdate" version="7.1.7600.16393" versionScope="nonSxS"/>
+        </updateDriver>
+      </applicable>
+      <driver inf="vpcuxd.inf" ranking="normal">
+        <assemblyIdentity buildType="release" language="neutral" name="vpcuxd.inf" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" type="driverUpdate" version="7.1.7600.16393" versionScope="nonSxS"/>
+      </driver>
+    </update>
+
+This completes my presentation of Windows Update packages, at least for now.
+It would be useful to start working on an update package creator, that will empower advanced users to install whatever they want, however they want.
+
+
+More details about the MUM/ Manifest connection:
+===============================================
+Some MUM files in the MUM chain may contain references similar to these:
+
+;Create an 'update': a top-level 'bundle' to connect MUM with MANIFEST.
+
+    <update description="wvpchbus_inf" displayName="wvpchbus_inf" name="INF_wvpchbus">
+      <applicable disposition="detect">
+        <detectUpdate>
+          <parent name="wvpchbus_inf"/> ;No prerequisites
+        </detectUpdate>
+      </applicable>
+      <component>
+        <assemblyIdentity buildType="release" language="sv-SE" name="wvpchbus.inf-LanguagePack" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" version="7.1.7600.16393" versionScope="nonSxS"/>
+      </component>
+    </update>
+
+This section is responsible for linking the component (MANIFEST) named amd64_wvpchbus.inf-languagepack_31bf3856ad364e35_7.1.7600.16393_sv-se_e01330253ba0e3cd.manifest with the specific MUM file.
+So, apart from the CAT connection, there is also a link inside the MUM itself.
+The specified MANIFEST file, in turn, is a trigger for another MANIFEST file, referenced as dependency:
+
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?Copyright (c) Microsoft Corporation. All rights reserved.?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v3" copyright="Copyright (c) Microsoft Corporation. All Rights Reserved." manifestVersion="1.0">
+    <assemblyIdentity buildType="release" language="sv-SE" name="wvpchbus.inf-LanguagePack" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" version="7.1.7600.16393" versionScope="nonSxS"/>
+    <deployment/>
+    <dependency discoverable="no">
+        <dependentAssembly dependencyType="install">
+            <assemblyIdentity buildType="release" language="sv-SE" name="wvpchbus.inf.Resources" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" version="7.1.7600.16393" versionScope="nonSxS"/>
+        </dependentAssembly>
+    </dependency>
+    <rescache xmlns="urn:schemas-microsoft-com:rescache.v1"/>
+</assembly>
+
+This dependency contains everything we've seen previously (file copying, driver install, etc.). Everything is triggered from a single MUM file.
+It seems it's rather complicated after all. :rolleyes:
+I'll continue to search for patterns in Windows Update packages and report anything significant here.
+
+1. The update.ses manifest file
+===============================
+
+In a few big updates (like service packs) one may notice the presence of an update.ses file. The purpose of this file is to control package target installation state in different servicing stack conditions. For example, you could define a different behaviour when the servicing stack is of a different version, when the update is deployed online or offline. Ses stands for 'session'. This file controls the CBS session manager.
+Update.ses is digitally signed by the update.cat file. The same file is used to sign update.mum.
+Example from Windows 7 SP1:
+
+<?xml version="1.0" encoding="UTF-8"?>
+<Session version="1.0">
+    <Tasks operationMode="OnlineInstall"> ;Actions to take when installing online.
+        <Phase servicingStack="6.1.7601.17514"> ;Prerequisite servicing stack version for update installation.
+;Define target state for the specified package. See DISMAPI Documentation for supported installation states.
+            <package id="Package_for_KB976902~31bf3856ad364e35~amd64~~6.1.1.17514" targetState="Installed"/>
+        </Phase>
+        <Phase exclusive="AllowPending">
+            <package id="Windows7SP1-KB976933~31bf3856ad364e35~amd64~~6.1.1.17514" targetState="Installed"/>
+        </Phase>
+    </Tasks>
+    <Tasks operationMode="OnlineUninstall"> ;Actions to take when update is being uninstalled.
+        <Phase exclusive="AllowPending">
+            <package id="Windows7SP1-KB976933~31bf3856ad364e35~amd64~~6.1.1.17514" targetState="Absent"/>
+        </Phase>
+    </Tasks>
+    <Tasks operationMode="OfflineInstall">
+        <Phase>
+            <package id="Windows7SP1-KB976933~31bf3856ad364e35~amd64~~6.1.1.17514" targetState="Absent"/>
+        </Phase>
+    </Tasks>
+    <Tasks operationMode="OfflineUninstall">
+        <Phase>
+            <package id="Windows7SP1-KB976933~31bf3856ad364e35~amd64~~6.1.1.17514" targetState="Absent"/>
+        </Phase>
+    </Tasks>
+</Session>
+
+2. It is not essential to have a package container manifest (_manifest_.cix.xml) if there are no deltas in the update package.
+
+If there is no point in creating deltas (e.g. IE11 install package), because this will not save any disk space, then there is no need for adding such a manifest. The payload (files) each MANIFEST file copies to the system is stored in a FOLDER that has exactly the same name as its respective manifest:
+For example, all files copied by amd64_aagwrapper_31bf3856ad364e35_6.1.7601.17514_none_dd3e751b9f413882.manifest are stored in the directory amd64_aagwrapper_31bf3856ad364e35_6.1.7601.17514_none_dd3e751b9f413882 inside the update package root directory.
+In this case the sourceName in the MANIFEST file has to be defined explicitly:
+
+  <file name="agilevpn.sys" destinationPath="$(runtime.drivers)\" sourceName="agilevpn.sys" sourcePath=".\" importPath="$(build.nttree)\">
+    <securityDescriptor name="WRP_FILE_DEFAULT_SDDL" />
+  <asmv2:hash xmlns:asmv2="urn:schemas-microsoft-com:asm.v2"><dsig:Transforms xmlns:dsig="http://www.w3.org/2000/09/xmldsig#"><dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" /></dsig:Transforms><dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" xmlns:dsig="http://www.w3.org/2000/09/xmldsig#" /><dsig:DigestValue xmlns:dsig="http://www.w3.org/2000/09/xmldsig#">YscNoSf0j3lviJe7+iOrbrCAzJI/Dwkd+jhKk/XJDKE=</dsig:DigestValue></asmv2:hash></file>

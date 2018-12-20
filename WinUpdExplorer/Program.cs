@@ -1,78 +1,26 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Xml.Serialization;
 
 namespace WinUpdExplorer
 {
-    public static class Program
+    public static partial class Program
     {
         public static int Main(string[] args)
         {
             Initialize();
-            // bool allConjectureStand = WsusScanParallelContentConjecture();
+            // bool allConjectureStand = WsusScanParallelContentConjecture(); // UNUSED
+            // Read the package.xml file from WSUSSCAN directory.
             ReadPackage();
+            // Build inter Update dependencies from package content.
+            UpdateDependencyManager dependencyManager = new UpdateDependencyManager(_package);
+            dependencyManager.BuildDependencies();
+            // Build updates details from the content of the core, extended and localized
+            // sub-directories of WSUSSCAN.
+            ReadUpdatesDetails();
+            // ReadManifest(); // UNUSED
+            VerifyManifestSyntax();
             return 0;
-        }
-
-        private static bool BuffersMatch(byte[] x, byte[] y)
-        {
-            if (x.Length != y.Length) {
-                return false;
-            }
-            int length = x.Length;
-            for(int index = 0; index < length; index++) {
-                if (x[index] != y[index]) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        private static bool FilesAreSubsetOf(this DirectoryInfo subset, DirectoryInfo superset)
-        {
-            string subsetFullName = subset.FullName;
-            int subsetFullNameLength = subsetFullName.Length;
-            string supersetFullName = superset.FullName;
-            Stack<DirectoryInfo> pendingSubDirectory = new Stack<DirectoryInfo>();
-            pendingSubDirectory.Push(subset);
-            byte[] scannedContent = new byte[16 * 1024];
-            byte[] expectedContent = new byte[16 * 1024];
-            while (0 < pendingSubDirectory.Count) {
-                DirectoryInfo candidate = pendingSubDirectory.Pop();
-                string candidateFullName = candidate.FullName;
-                string suffix = (subsetFullNameLength == candidateFullName.Length)
-                    ? string.Empty
-                    : candidateFullName.Substring(subsetFullNameLength);
-                DirectoryInfo scannedDirectory = new DirectoryInfo(subsetFullName + suffix);
-                int scannedDirectoryNameLength = scannedDirectory.FullName.Length;
-                foreach (DirectoryInfo pending in scannedDirectory.GetDirectories()) {
-                    pendingSubDirectory.Push(pending);
-                }
-                foreach(FileInfo scannedFile in scannedDirectory.GetFiles()) {
-                    string scannedFileFullName = scannedFile.FullName;
-                    string relativeFileName = scannedFileFullName.Substring(subsetFullNameLength);
-                    string expectedFileName = supersetFullName + relativeFileName;
-                    FileInfo expectedFile = new FileInfo(expectedFileName);
-                    if (!expectedFile.Exists) {
-                        return false;
-                    }
-                    if (expectedFile.Length != scannedFile.Length) {
-                        return false;
-                    }
-                    using (FileStream input = scannedFile.OpenRead()) {
-                        input.Read(scannedContent, 0, scannedContent.Length);
-                    }
-                    using (FileStream input = expectedFile.OpenRead()) {
-                        input.Read(expectedContent, 0, expectedContent.Length);
-                    }
-                    if (!BuffersMatch(scannedContent, expectedContent)) {
-                        return false;
-                    }
-                    continue;
-                }
-            }
-            return true;
         }
 
         private static void Initialize()
@@ -80,14 +28,15 @@ namespace WinUpdExplorer
             _baseDirectory = new DirectoryInfo(
                 Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "Temp", "WinUpdate20181212", "WSUSSCAN"));
+                    "Temp", "WinUpdate20181212"));
             _packageDirectory = new DirectoryInfo(Path.Combine(_baseDirectory.FullName, "PACKAGE"));
+            _psfxDirectory = new DirectoryInfo(Path.Combine(_baseDirectory.FullName, "PSFX"));
             _wsusscanDirectory = new DirectoryInfo(Path.Combine(_baseDirectory.FullName, "WSUSSCAN"));
         }
 
         private static void ReadPackage()
         {
-            XmlSerializer serializer = new XmlSerializer(typeof(Package));
+            XmlSerializer serializer = new XmlSerializer(typeof(Container.Package));
             serializer.UnknownNode += new XmlNodeEventHandler(delegate (object sender, XmlNodeEventArgs e) {
                 return;
             });
@@ -95,28 +44,83 @@ namespace WinUpdExplorer
                 return;
             });
             using (FileStream input = File.OpenRead(Path.Combine(_wsusscanDirectory.FullName, "package.xml"))) {
-                _package = (Package)serializer.Deserialize(input);
+                _package = (Container.Package)serializer.Deserialize(input);
             }
             return;
         }
 
-        /// <summary>Verify the WSUSSCAN and PACKAGE directories are mirror and contain the exact
-        /// same files and content.</summary>
-        /// <returns></returns>
-        private static bool WsusScanParallelContentConjecture()
+        private static void ReadUpdateCoreDetails(XmlSerializer serializer, DirectoryInfo from,
+            uint id)
         {
-            if (!_packageDirectory.FilesAreSubsetOf(_wsusscanDirectory)) {
-                return false;
+            FileInfo targetFile = new FileInfo(Path.Combine(from.FullName, id.ToString()));
+            if (!targetFile.Exists) {
+                throw new ApplicationException("BUG");
             }
-            if (!_wsusscanDirectory.FilesAreSubsetOf(_packageDirectory)) {
-                return false;
+            using (XmlFragmentSerializationWrapper wrapper =
+                new XmlFragmentSerializationWrapper(targetFile, Container.UpdateCoreDetails.RootNodeName)) {
+                serializer.Deserialize(wrapper);
             }
-            return true;
+            return;
+        }
+
+        private static void ReadUpdatesDetails()
+        {
+            DirectoryInfo coreDirectory = new DirectoryInfo(
+                Path.Combine(_wsusscanDirectory.FullName, "core"));
+            DirectoryInfo extendedDirectory = new DirectoryInfo(
+                Path.Combine(_wsusscanDirectory.FullName, "extended"));
+            DirectoryInfo localizedDirectory = new DirectoryInfo(
+                Path.Combine(_wsusscanDirectory.FullName, "localized"));
+            XmlSerializer coreSerializer = new XmlSerializer(typeof(Container.UpdateCoreDetails));
+            coreSerializer.UnknownNode += new XmlNodeEventHandler(delegate (object sender, XmlNodeEventArgs e) {
+                return;
+            });
+            coreSerializer.UnknownAttribute += new XmlAttributeEventHandler(delegate (object sender, XmlAttributeEventArgs e) {
+                return;
+            });
+            foreach (uint updateId in _package.EnumerateUpdateIds()) {
+                ReadUpdateCoreDetails(coreSerializer, coreDirectory, updateId);
+            }
+            return;
+        }
+
+        private static void VerifyManifestSyntax()
+        {
+            XmlSerializer serializer = new XmlSerializer(typeof(Manifest.Assembly));
+            serializer.UnknownNode += new XmlNodeEventHandler(delegate (object sender, XmlNodeEventArgs e) {
+                return;
+            });
+            serializer.UnknownAttribute += new XmlAttributeEventHandler(delegate (object sender, XmlAttributeEventArgs e) {
+                return;
+            });
+            int successCount = 0;
+            int failureCount = 0;
+            foreach(FileInfo candidate in _psfxDirectory.GetFiles("*.manifest")) {
+                using (FileStream input = File.OpenRead(candidate.FullName)) {
+                    try {
+                        Manifest.Assembly assemblyManifest = (Manifest.Assembly)serializer.Deserialize(input);
+                        string discoverable = assemblyManifest.Dependency.Discoverable;
+                        if (("no" != discoverable) && ("false" != discoverable)) {
+                            throw new NotImplementedException();
+                        }
+                        successCount++;
+                    }
+                    catch (Exception e) {
+                        // TODO : These are file using the "urn:schemas-microsoft-com:asm.v1" namespace.
+                        if (null != e.InnerException) {
+                            Console.WriteLine(e.InnerException.Message);
+                        }
+                        failureCount++;
+                    }
+                }
+            }
+            return;
         }
 
         private static DirectoryInfo _baseDirectory;
-        private static Package _package;
+        private static Container.Package _package;
         private static DirectoryInfo _packageDirectory;
+        private static DirectoryInfo _psfxDirectory;
         private static DirectoryInfo _wsusscanDirectory;
     }
 }

@@ -36,22 +36,38 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Category.cs" />
+    <Compile Include="Container\Basis.cs" />
+    <Compile Include="Container\Category.cs" />
+    <Compile Include="Container\Delta.cs" />
+    <Compile Include="Container\FileDescriptor.cs" />
+    <Compile Include="Container\UpdateCoreDetails.cs" />
     <Compile Include="FileLocation.cs" />
-    <Compile Include="IdReference.cs" />
-    <Compile Include="LanguageBoundReference.cs" />
-    <Compile Include="NamedItem.cs" />
-    <Compile Include="Package.cs" />
+    <Compile Include="Container\HashValue.cs" />
+    <Compile Include="Container\IdReference.cs" />
+    <Compile Include="Container\LanguageBoundReference.cs" />
+    <Compile Include="Container\Container.cs" />
+    <Compile Include="Manifest\Assembly.cs" />
+    <Compile Include="Manifest\AssemblyIdentity.cs" />
+    <Compile Include="Manifest\Dependency.cs" />
+    <Compile Include="Manifest\DependentAssembly .cs" />
+    <Compile Include="Container\NamedItem.cs" />
+    <Compile Include="Container\Package.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="Program_UNUSED.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RevisionReference.cs" />
-    <Compile Include="Update.cs" />
-    <Compile Include="UpdateIdReferenceCollection.cs" />
+    <Compile Include="Container\Bundler.cs" />
+    <Compile Include="Container\Source.cs" />
+    <Compile Include="Container\Update.cs" />
+    <Compile Include="Container\UpdateIdReferenceCollection.cs" />
+    <Compile Include="UpdateDependencyManager.cs" />
+    <Compile Include="XmlFragmentSerializationWrapper.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="Ignite.cmd" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Manifest\AsmV3Schemas.txt" />
     <Content Include="MSUFileFormat.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
