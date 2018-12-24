@@ -38,9 +38,21 @@
   <ItemGroup>
     <Compile Include="Container\Basis.cs" />
     <Compile Include="Container\Category.cs" />
+    <Compile Include="Container\Core\AndInstalledCondition.cs" />
+    <Compile Include="Container\Core\ApplicabilityRuleCollection.cs" />
+    <Compile Include="Container\Core\AtLeastOneCondition.cs" />
+    <Compile Include="Container\Core\InstalledCondition.cs" />
+    <Compile Include="Container\Core\OrInstalledCondition.cs" />
+    <Compile Include="Container\Core\PrerequisiteCollection.cs" />
+    <Compile Include="Container\Core\RegDwordCondition.cs" />
+    <Compile Include="Container\Core\RegValueExistsCondition.cs" />
+    <Compile Include="Container\Core\WindowsVersionCondition.cs" />
     <Compile Include="Container\Delta.cs" />
     <Compile Include="Container\FileDescriptor.cs" />
-    <Compile Include="Container\UpdateCoreDetails.cs" />
+    <Compile Include="Container\Core\PropertyCollection.cs" />
+    <Compile Include="Container\Core\RelationshipCollection.cs" />
+    <Compile Include="Container\Core\UpdateCoreDetails.cs" />
+    <Compile Include="Container\Core\UpdateIdentity.cs" />
     <Compile Include="FileLocation.cs" />
     <Compile Include="Container\HashValue.cs" />
     <Compile Include="Container\IdReference.cs" />

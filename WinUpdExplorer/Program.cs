@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using System.Xml.Serialization;
 
 namespace WinUpdExplorer
@@ -38,9 +39,11 @@ namespace WinUpdExplorer
         {
             XmlSerializer serializer = new XmlSerializer(typeof(Container.Package));
             serializer.UnknownNode += new XmlNodeEventHandler(delegate (object sender, XmlNodeEventArgs e) {
+                TraceUnknownNode(e);
                 return;
             });
             serializer.UnknownAttribute += new XmlAttributeEventHandler(delegate (object sender, XmlAttributeEventArgs e) {
+                TraceUnknownAttribute(e);
                 return;
             });
             using (FileStream input = File.OpenRead(Path.Combine(_wsusscanDirectory.FullName, "package.xml"))) {
@@ -49,18 +52,34 @@ namespace WinUpdExplorer
             return;
         }
 
-        private static void ReadUpdateCoreDetails(XmlSerializer serializer, DirectoryInfo from,
-            uint id)
+        private static Container.Core.UpdateCoreDetails ReadUpdateCoreDetails(XmlSerializer serializer,
+            DirectoryInfo from, uint id, params Tuple<string, string>[] namespaces)
         {
             FileInfo targetFile = new FileInfo(Path.Combine(from.FullName, id.ToString()));
             if (!targetFile.Exists) {
                 throw new ApplicationException("BUG");
             }
             using (XmlFragmentSerializationWrapper wrapper =
-                new XmlFragmentSerializationWrapper(targetFile, Container.UpdateCoreDetails.RootNodeName)) {
-                serializer.Deserialize(wrapper);
+                new XmlFragmentSerializationWrapper(targetFile, Container.Core.UpdateCoreDetails.RootNodeName, namespaces))
+            {
+                try {
+                    _xmlParsingErrorEncountered = false;
+                    Console.WriteLine(id.ToString());
+                    Container.Core.UpdateCoreDetails result = (Container.Core.UpdateCoreDetails) serializer.Deserialize(wrapper);
+                    if (_xmlParsingErrorEncountered) {
+                        wrapper.DumpContent();
+                        int i = 1;
+                    }
+                    return result;
+                }
+                catch (Exception e) {
+                    byte[] buffer = new byte[targetFile.Length + 1024];
+                    wrapper.Reset();
+                    int readCount = wrapper.Read(buffer, 0, buffer.Length);
+                    string content = Encoding.UTF8.GetString(buffer, 0, readCount);
+                    throw;
+                }
             }
-            return;
         }
 
         private static void ReadUpdatesDetails()
@@ -71,16 +90,43 @@ namespace WinUpdExplorer
                 Path.Combine(_wsusscanDirectory.FullName, "extended"));
             DirectoryInfo localizedDirectory = new DirectoryInfo(
                 Path.Combine(_wsusscanDirectory.FullName, "localized"));
-            XmlSerializer coreSerializer = new XmlSerializer(typeof(Container.UpdateCoreDetails));
+            XmlSerializer coreSerializer = new XmlSerializer(typeof(Container.Core.UpdateCoreDetails));
             coreSerializer.UnknownNode += new XmlNodeEventHandler(delegate (object sender, XmlNodeEventArgs e) {
+                TraceUnknownNode(e);
                 return;
             });
             coreSerializer.UnknownAttribute += new XmlAttributeEventHandler(delegate (object sender, XmlAttributeEventArgs e) {
+                TraceUnknownAttribute(e);
                 return;
             });
             foreach (uint updateId in _package.EnumerateUpdateIds()) {
-                ReadUpdateCoreDetails(coreSerializer, coreDirectory, updateId);
+                if (2858 == updateId) { continue; }
+                Container.Core.UpdateCoreDetails coreDetails =
+                    ReadUpdateCoreDetails(coreSerializer, coreDirectory, updateId,
+                    new Tuple<string, string>("b", Container.Core.UpdateCoreDetails.AlternateNamespace));
+                continue;
             }
+            return;
+        }
+
+        private static void TraceUnknownAttribute(XmlAttributeEventArgs e)
+        {
+            _xmlParsingErrorEncountered = true;
+            Console.Write("Unknown attribute '{0}/{1}' at L{2}/C{3}",
+                e.Attr.NamespaceURI ?? "NONE", e.Attr.LocalName ?? "NONE", e.LineNumber, e.LinePosition);
+            if (null != e.Attr.ParentNode) {
+                Console.Write(" in '{0}/{1}'",
+                    e.Attr.ParentNode.NamespaceURI ?? "NONE", e.Attr.ParentNode.LocalName ?? "NONE");
+            }
+            Console.WriteLine();
+            return;
+        }
+
+        private static void TraceUnknownNode(XmlNodeEventArgs e)
+        {
+            _xmlParsingErrorEncountered = true;
+            Console.WriteLine("Unknown {0} '{1}/{2}' at L{3}/C{4}",
+                e.NodeType, e.NamespaceURI ?? "NONE", e.LocalName ?? "NONE", e.LineNumber, e.LinePosition);
             return;
         }
 
@@ -121,6 +167,7 @@ namespace WinUpdExplorer
         private static Container.Package _package;
         private static DirectoryInfo _packageDirectory;
         private static DirectoryInfo _psfxDirectory;
+        private static bool _xmlParsingErrorEncountered;
         private static DirectoryInfo _wsusscanDirectory;
     }
 }
