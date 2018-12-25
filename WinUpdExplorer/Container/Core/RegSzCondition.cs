@@ -3,7 +3,7 @@ using System.Xml.Serialization;
 
 namespace WinUpdExplorer.Container.Core
 {
-    public class RegDwordCondition : RegValueConditionBase
+    public class RegSzCondition : RegValueConditionBase
     {
     }
 }

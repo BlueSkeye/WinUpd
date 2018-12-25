@@ -73,10 +73,8 @@ namespace WinUpdExplorer
                     return result;
                 }
                 catch (Exception e) {
-                    byte[] buffer = new byte[targetFile.Length + 1024];
-                    wrapper.Reset();
-                    int readCount = wrapper.Read(buffer, 0, buffer.Length);
-                    string content = Encoding.UTF8.GetString(buffer, 0, readCount);
+                    Console.WriteLine(e.Message);
+                    wrapper.DumpContent();
                     throw;
                 }
             }

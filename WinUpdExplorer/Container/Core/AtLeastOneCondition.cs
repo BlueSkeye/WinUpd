@@ -8,6 +8,6 @@ namespace WinUpdExplorer.Container.Core
         [XmlAttribute("IsCategory")]
         public bool IsCategory { get; set; }
         [XmlElement("UpdateIdentity")]
-        public UpdateIdentity UpdateIdentity { get; set; }
+        public UpdateIdentity[] UpdateIdentity { get; set; }
     }
 }

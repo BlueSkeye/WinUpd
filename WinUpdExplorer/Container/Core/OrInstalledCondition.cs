@@ -3,14 +3,11 @@ using System.Xml.Serialization;
 
 namespace WinUpdExplorer.Container.Core
 {
-    public class OrInstalledCondition
+    public class OrInstalledCondition : CompositeConditionBase
     {
         [XmlElement("And")]
-        public AndInstalledCondition And { get; set; }
-        [XmlElement("b.RegDword")]
-        public RegDwordCondition[] RegDword { get; set; }
-        // [XmlArrayItem("b.WindowsVersion")]
-        [XmlElement("b.WindowsVersion")]
-        public WindowsVersionCondition[] WindowsVersion { get; set; }
+        public AndInstalledCondition[] And { get; set; }
+        [XmlElement("Not")]
+        public NotInstalledCondition[] Not { get; set; }
     }
 }
