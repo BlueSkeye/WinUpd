@@ -100,8 +100,7 @@ namespace WinUpdExplorer
             foreach (uint updateId in _package.EnumerateUpdateIds()) {
                 if (2858 == updateId) { continue; }
                 Container.Core.UpdateCoreDetails coreDetails =
-                    ReadUpdateCoreDetails(coreSerializer, coreDirectory, updateId,
-                    new Tuple<string, string>("b", Container.Core.UpdateCoreDetails.AlternateNamespace));
+                    ReadUpdateCoreDetails(coreSerializer, coreDirectory, updateId);
                 continue;
             }
             return;

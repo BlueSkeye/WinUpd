@@ -3,8 +3,8 @@ using System.Xml.Serialization;
 
 namespace WinUpdExplorer.Container.Core
 {
-    public class AndInstalledCondition : LogicalCompositeConditionBase
+    public class AlwaysFalseCondition
     {
-        // Intentionally left empty
+        // Intentionally empty.
     }
 }

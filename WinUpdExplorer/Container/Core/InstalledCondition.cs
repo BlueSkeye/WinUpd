@@ -5,6 +5,8 @@ namespace WinUpdExplorer.Container.Core
 {
     public class InstalledCondition : CompositeConditionBase
     {
+        [XmlElement("False")]
+        public AlwaysFalseCondition AlwaysFalse { get; set; }
         [XmlElement("True")]
         public AlwaysTrueCondition AlwaysTrue { get; set; }
         [XmlElement("And")]

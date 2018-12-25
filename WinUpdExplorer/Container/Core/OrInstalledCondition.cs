@@ -3,11 +3,8 @@ using System.Xml.Serialization;
 
 namespace WinUpdExplorer.Container.Core
 {
-    public class OrInstalledCondition : CompositeConditionBase
+    public class OrInstalledCondition : LogicalCompositeConditionBase
     {
-        [XmlElement("And")]
-        public AndInstalledCondition[] And { get; set; }
-        [XmlElement("Not")]
-        public NotInstalledCondition[] Not { get; set; }
+        // Intentionally left empty
     }
 }

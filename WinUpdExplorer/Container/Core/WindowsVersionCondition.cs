@@ -5,6 +5,8 @@ namespace WinUpdExplorer.Container.Core
 {
     public class WindowsVersionCondition
     {
+        [XmlAttribute("AllSuitesMustBePresent")]
+        public bool AllSuitesMustBePresent { get; set; }
         [XmlAttribute("BuildNumber")]
         public uint BuildNumber { get; set; }
         [XmlAttribute("Comparison")]
@@ -15,5 +17,9 @@ namespace WinUpdExplorer.Container.Core
         public uint MinorVersion { get; set; }
         [XmlAttribute("ProductType")]
         public uint ProductType { get; set; }
+        [XmlAttribute("ServicePackMajor")]
+        public uint ServicePackMajor { get; set; }
+        [XmlAttribute("SuiteMask")]
+        public uint SuiteMask { get; set; }
     }
 }

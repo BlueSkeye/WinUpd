@@ -3,11 +3,9 @@ using System.Xml.Serialization;
 
 namespace WinUpdExplorer.Container.Core
 {
-    public class NotInstalledCondition : CompositeConditionBase
+    public class NotInstalledCondition : LogicalCompositeConditionBase
     {
-        [XmlElement("And")]
-        public AndInstalledCondition[] And { get; set; }
-        [XmlElement("Or")]
-        public OrInstalledCondition[] Or { get; set; }
+        // Intentionally left empty.
+        // REMARKS : Is a <Not> element really expected inside another <And> element ?
     }
 }

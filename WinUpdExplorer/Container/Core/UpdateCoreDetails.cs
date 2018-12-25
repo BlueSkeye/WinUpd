@@ -16,6 +16,5 @@ namespace WinUpdExplorer.Container.Core
         public UpdateIdentity UpdateIdentity { get; set; }
 
         internal const string RootNodeName = "Core";
-        internal const string AlternateNamespace = "http://nowhere.com";
     }
 }
