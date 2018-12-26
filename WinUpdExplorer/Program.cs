@@ -51,7 +51,7 @@ namespace WinUpdExplorer
 
         private static void ReadPackage()
         {
-            XmlSerializer serializer = new XmlSerializer(typeof(Container.Package));
+            XmlSerializer serializer = new XmlSerializer(typeof(Packaging.Package));
             serializer.UnknownNode += new XmlNodeEventHandler(delegate (object sender, XmlNodeEventArgs e) {
                 TraceUnknownNode(e);
                 return;
@@ -61,7 +61,7 @@ namespace WinUpdExplorer
                 return;
             });
             using (FileStream input = File.OpenRead(Path.Combine(_wsusscanDirectory.FullName, "package.xml"))) {
-                _package = (Container.Package)serializer.Deserialize(input);
+                _package = (Packaging.Package)serializer.Deserialize(input);
             }
             return;
         }
@@ -101,16 +101,16 @@ namespace WinUpdExplorer
             DirectoryInfo localizedDirectory = new DirectoryInfo(
                 Path.Combine(_wsusscanDirectory.FullName, "localized"));
 
-            XmlSerializer coreSerializer = CreateWSUSScanUpdateSerializer<Container.Core.UpdateCoreDetails>();
-            XmlSerializer extendedSerializer = CreateWSUSScanUpdateSerializer<Container.Extended.UpdateExtendedDetails>();
+            XmlSerializer coreSerializer = CreateWSUSScanUpdateSerializer<Scanning.Core.UpdateCoreDetails>();
+            XmlSerializer extendedSerializer = CreateWSUSScanUpdateSerializer<Scanning.Extended.UpdateExtendedDetails>();
             foreach (uint updateId in _package.EnumerateUpdateIds()) {
                 if (2858 == updateId) { continue; }
-                Container.Core.UpdateCoreDetails coreDetails =
-                    ReadWSUSScanUpdateDetails<Container.Core.UpdateCoreDetails>(coreSerializer, coreDirectory,
-                        updateId, Container.Core.UpdateCoreDetails.RootNodeName);
-                Container.Extended.UpdateExtendedDetails extendedDetails =
-                    ReadWSUSScanUpdateDetails<Container.Extended.UpdateExtendedDetails>(extendedSerializer, extendedDirectory,
-                        updateId, Container.Extended.UpdateExtendedDetails.RootNodeName);
+                Scanning.Core.UpdateCoreDetails coreDetails =
+                    ReadWSUSScanUpdateDetails<Scanning.Core.UpdateCoreDetails>(coreSerializer, coreDirectory,
+                        updateId, Scanning.Core.UpdateCoreDetails.RootNodeName);
+                Scanning.Extended.UpdateExtendedDetails extendedDetails =
+                    ReadWSUSScanUpdateDetails<Scanning.Extended.UpdateExtendedDetails>(extendedSerializer, extendedDirectory,
+                        updateId, Scanning.Extended.UpdateExtendedDetails.RootNodeName);
                 continue;
             }
             return;
@@ -171,7 +171,7 @@ namespace WinUpdExplorer
         }
 
         private static DirectoryInfo _baseDirectory;
-        private static Container.Package _package;
+        private static Packaging.Package _package;
         private static DirectoryInfo _packageDirectory;
         private static DirectoryInfo _psfxDirectory;
         private static bool _xmlParsingErrorEncountered;

@@ -11,7 +11,7 @@ namespace WinUpdExplorer
     /// number. The current algorithm doesn't distinguish between such two updates.</remarks>
     internal class UpdateDependencyManager
     {
-        internal UpdateDependencyManager(Container.Package package)
+        internal UpdateDependencyManager(Packaging.Package package)
         {
             _package = package;
             InitializeAvailableUpdates();
@@ -22,8 +22,8 @@ namespace WinUpdExplorer
         internal void BuildDependencies(bool traceDependencies = false)
         {
             SequencerState state = new SequencerState(traceDependencies);
-            Container.Update[] updates = _package.Updates;
-            foreach(Container.Update candidate in updates) {
+            Packaging.Update[] updates = _package.Updates;
+            foreach(Packaging.Update candidate in updates) {
                 Guid updateId = candidate.UpdateId;
 
                 if (null == candidate.Prerequisites) {
@@ -32,13 +32,13 @@ namespace WinUpdExplorer
                 }
 
                 foreach(object prerequisite in candidate.Prerequisites) {
-                    if (prerequisite is Container.UpdateIdReference) {
-                        Guid requiredUpdateId = ((Container.UpdateIdReference)prerequisite).Id;
+                    if (prerequisite is Packaging.UpdateIdReference) {
+                        Guid requiredUpdateId = ((Packaging.UpdateIdReference)prerequisite).Id;
                         state.ConditionalyApplyUpdate(updateId, requiredUpdateId);
                         continue;
                     }
-                    if (prerequisite is Container.UpdateIdReferenceCollection) {
-                        foreach(Container.UpdateIdReference reference in ((Container.UpdateIdReferenceCollection)prerequisite).UpdateIds) {
+                    if (prerequisite is Packaging.UpdateIdReferenceCollection) {
+                        foreach(Packaging.UpdateIdReference reference in ((Packaging.UpdateIdReferenceCollection)prerequisite).UpdateIds) {
                             Guid requiredUpdateId = reference.Id;
                             if (state.ConditionalyApplyUpdate(updateId, requiredUpdateId)) {
                                 break;
@@ -56,7 +56,7 @@ namespace WinUpdExplorer
         private void InitializeAvailableUpdates()
         {
             _packageUpdates = new Dictionary<Guid, string>();
-            foreach (Container.Update candidate in _package.Updates) {
+            foreach (Packaging.Update candidate in _package.Updates) {
                 Guid updateId = candidate.UpdateId;
                 Tuple<Guid, uint> key = new Tuple<Guid, uint>(updateId, candidate.RevisionId);
                 try {
@@ -72,7 +72,7 @@ namespace WinUpdExplorer
             return;
         }
 
-        private Container.Package _package;
+        private Packaging.Package _package;
         private Dictionary<Guid, string> _packageUpdates = new Dictionary<Guid, string>();
 
         private class SequencerState
