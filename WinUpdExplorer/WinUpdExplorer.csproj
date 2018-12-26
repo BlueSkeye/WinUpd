@@ -72,6 +72,10 @@
     <Compile Include="Container\Core\WindowsVersionCondition.cs" />
     <Compile Include="Container\Core\WmiQuery.cs" />
     <Compile Include="Container\Delta.cs" />
+    <Compile Include="Container\Extended\CategoryInformation.cs" />
+    <Compile Include="Container\Extended\ExtendedProperties.cs" />
+    <Compile Include="Container\Extended\HandlerSpecificData.cs" />
+    <Compile Include="Container\Extended\UpdateExtendedDetails.cs" />
     <Compile Include="Container\FileDescriptor.cs" />
     <Compile Include="Container\Core\PropertyCollection.cs" />
     <Compile Include="Container\Core\RelationshipCollection.cs" />

@@ -24,6 +24,20 @@ namespace WinUpdExplorer
             return 0;
         }
 
+        private static XmlSerializer CreateWSUSScanUpdateSerializer<T>()
+        {
+            XmlSerializer result = new XmlSerializer(typeof(T));
+            result.UnknownNode += new XmlNodeEventHandler(delegate (object sender, XmlNodeEventArgs e) {
+                TraceUnknownNode(e);
+                return;
+            });
+            result.UnknownAttribute += new XmlAttributeEventHandler(delegate (object sender, XmlAttributeEventArgs e) {
+                TraceUnknownAttribute(e);
+                return;
+            });
+            return result;
+        }
+
         private static void Initialize()
         {
             _baseDirectory = new DirectoryInfo(
@@ -52,20 +66,18 @@ namespace WinUpdExplorer
             return;
         }
 
-        private static Container.Core.UpdateCoreDetails ReadUpdateCoreDetails(XmlSerializer serializer,
-            DirectoryInfo from, uint id, params Tuple<string, string>[] namespaces)
+        private static T ReadWSUSScanUpdateDetails<T>(XmlSerializer serializer, DirectoryInfo from, uint id,
+            string rootNodeName, params Tuple<string, string>[] namespaces)
         {
             FileInfo targetFile = new FileInfo(Path.Combine(from.FullName, id.ToString()));
             if (!targetFile.Exists) {
                 throw new ApplicationException("BUG");
             }
-            using (XmlFragmentSerializationWrapper wrapper =
-                new XmlFragmentSerializationWrapper(targetFile, Container.Core.UpdateCoreDetails.RootNodeName, namespaces))
-            {
+            using (XmlFragmentSerializationWrapper wrapper = new XmlFragmentSerializationWrapper(targetFile, rootNodeName, namespaces)) {
                 try {
                     _xmlParsingErrorEncountered = false;
                     Console.WriteLine(id.ToString());
-                    Container.Core.UpdateCoreDetails result = (Container.Core.UpdateCoreDetails) serializer.Deserialize(wrapper);
+                    T result = (T) serializer.Deserialize(wrapper);
                     if (_xmlParsingErrorEncountered) {
                         wrapper.DumpContent();
                         int i = 1;
@@ -88,19 +100,17 @@ namespace WinUpdExplorer
                 Path.Combine(_wsusscanDirectory.FullName, "extended"));
             DirectoryInfo localizedDirectory = new DirectoryInfo(
                 Path.Combine(_wsusscanDirectory.FullName, "localized"));
-            XmlSerializer coreSerializer = new XmlSerializer(typeof(Container.Core.UpdateCoreDetails));
-            coreSerializer.UnknownNode += new XmlNodeEventHandler(delegate (object sender, XmlNodeEventArgs e) {
-                TraceUnknownNode(e);
-                return;
-            });
-            coreSerializer.UnknownAttribute += new XmlAttributeEventHandler(delegate (object sender, XmlAttributeEventArgs e) {
-                TraceUnknownAttribute(e);
-                return;
-            });
+
+            XmlSerializer coreSerializer = CreateWSUSScanUpdateSerializer<Container.Core.UpdateCoreDetails>();
+            XmlSerializer extendedSerializer = CreateWSUSScanUpdateSerializer<Container.Extended.UpdateExtendedDetails>();
             foreach (uint updateId in _package.EnumerateUpdateIds()) {
                 if (2858 == updateId) { continue; }
                 Container.Core.UpdateCoreDetails coreDetails =
-                    ReadUpdateCoreDetails(coreSerializer, coreDirectory, updateId);
+                    ReadWSUSScanUpdateDetails<Container.Core.UpdateCoreDetails>(coreSerializer, coreDirectory,
+                        updateId, Container.Core.UpdateCoreDetails.RootNodeName);
+                Container.Extended.UpdateExtendedDetails extendedDetails =
+                    ReadWSUSScanUpdateDetails<Container.Extended.UpdateExtendedDetails>(extendedSerializer, extendedDirectory,
+                        updateId, Container.Extended.UpdateExtendedDetails.RootNodeName);
                 continue;
             }
             return;
