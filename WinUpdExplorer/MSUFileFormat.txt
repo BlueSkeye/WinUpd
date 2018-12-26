@@ -46,7 +46,8 @@ https://github.com/smx-smx/wcpex/blob/master/wcpex.c
 This file expands into two other cab files which in turn provide two similar trees with 3 sub-directories :
 (core, extended, localized) and a package.xml file a couple of hundred Kbytes long.
 
-The core and extended directories contain a couple thousand files numbered from 0 upward with no hole.
+The core and extended directories contain a couple thousand files numbered from 0 upward. Some numbers
+seems to be missing.
 The localized directory is further divided in globalization related sub-directories which contain files
 using the same numbering schemen albeit with some numbers missing. However, none of those files have a number
 greater than any of the ones in the core and extended directories. This suggest some but not all of the
@@ -79,7 +80,11 @@ file. The associated URL is not one that is directly accessible from a browser. 
 last part (filename) is the one of the CAB file to be found in the MSU. The file name is of type
 platform_KBnumber_archi_PSFX.cab.
 
-PSFX manifest file
+_manifset_.cix.xml
+==================
+A huge XML file to be found in the PSFX directory.
+
+PSFX manifest files
 ===================
 YYY_XXX_TTT_ZZZ_none_UUU.manifest
 

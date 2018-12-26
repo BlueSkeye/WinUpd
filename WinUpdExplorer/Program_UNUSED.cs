@@ -66,21 +66,6 @@ namespace WinUpdExplorer
         //    return true;
         //}
 
-        //private static void ReadManifest()
-        //{
-        //    XmlSerializer serializer = new XmlSerializer(typeof(Container.Container));
-        //    serializer.UnknownNode += new XmlNodeEventHandler(delegate (object sender, XmlNodeEventArgs e) {
-        //        return;
-        //    });
-        //    serializer.UnknownAttribute += new XmlAttributeEventHandler(delegate (object sender, XmlAttributeEventArgs e) {
-        //        return;
-        //    });
-        //    using (FileStream input = File.OpenRead(Path.Combine(_psfxDirectory.FullName, "_manifest_.cix.xml"))) {
-        //        _manifest = (Container.Container)serializer.Deserialize(input);
-        //    }
-        //    return;
-        //}
-
         ///// <summary>Verify the WSUSSCAN and PACKAGE directories are mirror and contain the exact
         ///// same files and content.</summary>
         ///// <returns></returns>
@@ -94,7 +79,5 @@ namespace WinUpdExplorer
         //    }
         //    return true;
         //}
-
-        // private static Container.Container _manifest;
     }
 }

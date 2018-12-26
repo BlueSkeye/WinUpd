@@ -36,6 +36,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Manifest\Basis.cs" />
+    <Compile Include="Manifest\Container.cs" />
+    <Compile Include="Manifest\Delta.cs" />
+    <Compile Include="Manifest\FileDescriptor.cs" />
+    <Compile Include="Manifest\HashValue.cs" />
+    <Compile Include="Manifest\Source.cs" />
     <Compile Include="Packaging\Basis.cs" />
     <Compile Include="Packaging\Category.cs" />
     <Compile Include="Scanning\Core\AlwaysFalseCondition.cs" />

@@ -12,14 +12,17 @@ namespace WinUpdExplorer
             Initialize();
             // bool allConjectureStand = WsusScanParallelContentConjecture(); // UNUSED
             // Read the package.xml file from WSUSSCAN directory.
-            ReadPackage();
+            // ReadPackage(); // Disconnected for tests speed-up
+
             // Build inter Update dependencies from package content.
-            UpdateDependencyManager dependencyManager = new UpdateDependencyManager(_package);
-            dependencyManager.BuildDependencies();
+            //UpdateDependencyManager dependencyManager = new UpdateDependencyManager(_package);
+            //dependencyManager.BuildDependencies(); // Disconnected for tests speed-up
+
             // Build updates details from the content of the core, extended and localized
             // sub-directories of WSUSSCAN.
-            ReadUpdatesDetails();
-            // ReadManifest(); // UNUSED
+            // ReadUpdatesDetails(); // Disconnected for tests speed-up
+
+            ReadMainManifest();
             VerifyManifestSyntax();
             return 0;
         }
@@ -47,6 +50,43 @@ namespace WinUpdExplorer
             _packageDirectory = new DirectoryInfo(Path.Combine(_baseDirectory.FullName, "PACKAGE"));
             _psfxDirectory = new DirectoryInfo(Path.Combine(_baseDirectory.FullName, "PSFX"));
             _wsusscanDirectory = new DirectoryInfo(Path.Combine(_baseDirectory.FullName, "WSUSSCAN"));
+        }
+
+        private static void ReadMainManifest()
+        {
+            XmlSerializer serializer = new XmlSerializer(typeof(Manifest.Container));
+            int firstErrorPosition = -1;
+            int errorsCount = 0;
+            serializer.UnknownNode += new XmlNodeEventHandler(delegate (object sender, XmlNodeEventArgs e) {
+                if (10 > errorsCount++) {
+                    TraceUnknownNode(e);
+                    if (0 > firstErrorPosition) {
+                        firstErrorPosition = e.LinePosition;
+                    }
+                }
+                return;
+            });
+            serializer.UnknownAttribute += new XmlAttributeEventHandler(delegate (object sender, XmlAttributeEventArgs e) {
+                if (10 > errorsCount++) {
+                    TraceUnknownAttribute(e);
+                    if (0 > firstErrorPosition) {
+                        firstErrorPosition = e.LinePosition;
+                    }
+                }
+                return;
+            });
+            using (FileStream input = File.OpenRead(Path.Combine(_psfxDirectory.FullName, "_manifest_.cix.xml"))) {
+                _manifest = (Manifest.Container)serializer.Deserialize(input);
+                if (0 <= firstErrorPosition) {
+                    byte[] buffer = new byte[2048];
+                    input.Seek(Math.Max(0, firstErrorPosition - 400), SeekOrigin.Begin);
+                    int readCount = input.Read(buffer, 0, buffer.Length);
+                    Console.WriteLine("At C{0} == see 6th line =======================", firstErrorPosition);
+                    Console.WriteLine(Encoding.UTF8.GetString(buffer, 0, readCount));
+                    Console.WriteLine("=========================");
+                }
+            }
+            return;
         }
 
         private static void ReadPackage()
@@ -171,6 +211,7 @@ namespace WinUpdExplorer
         }
 
         private static DirectoryInfo _baseDirectory;
+        private static Manifest.Container _manifest;
         private static Packaging.Package _package;
         private static DirectoryInfo _packageDirectory;
         private static DirectoryInfo _psfxDirectory;

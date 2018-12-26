@@ -43,12 +43,12 @@ namespace WinUpdExplorer
             _contentStream = null;
         }
 
-        internal void DumpContent()
+        internal void DumpContent(int startPosition = 0, int length = -1)
         {
             byte[] buffer = new byte[_contentStream.Length + 1024];
             this.Reset();
-            int readCount = this.Read(buffer, 0, buffer.Length);
-            string content = Encoding.UTF8.GetString(buffer, 0, readCount);
+            int readCount = this.Read(buffer, 0, (-1 == length) ? buffer.Length : length);
+            string content = Encoding.UTF8.GetString(buffer, startPosition, readCount);
             Console.WriteLine("============================");
             Console.WriteLine(content);
             Console.WriteLine("============================");
