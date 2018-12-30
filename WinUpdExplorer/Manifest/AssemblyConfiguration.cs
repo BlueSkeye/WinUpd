@@ -7,5 +7,7 @@ namespace WinUpdExplorer.Manifest
     {
         [XmlElement("configurationSchema", Namespace = XmlNamespaces.AssemblyV3)]
         public ConfigurationSchema Schema { get; set; }
+        [XmlElement("metadata", Namespace = XmlNamespaces.AssemblyV3)]
+        public ConfigurationMetadata Metadata { get; set; }
     }
 }

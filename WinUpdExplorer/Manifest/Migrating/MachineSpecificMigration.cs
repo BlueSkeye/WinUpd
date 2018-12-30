@@ -5,6 +5,9 @@ namespace WinUpdExplorer.Manifest.Migrating
 {
     public class MachineSpecificMigration
     {
+        [XmlArray("detects"),
+            XmlArrayItem(ElementName = "detect", Type = typeof(Detector))]
+        public Detector[] Detect { get; set; }
         [XmlElement("environment")]
         public Environment Environment { get; set; }
         [XmlElement("plugin")]

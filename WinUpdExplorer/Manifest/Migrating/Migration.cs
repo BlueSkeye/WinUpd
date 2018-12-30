@@ -12,6 +12,8 @@ namespace WinUpdExplorer.Manifest.Migrating
 
         [XmlElement("machineSpecific")]
         public MachineSpecific MachineSpecific { get; set; }
+        [XmlElement("migrationDisplayID", Namespace = XmlNamespaces.AssemblyV3)]
+        public string DisplayID { get; set; }
         [XmlElement("migXml", Namespace = XmlNamespaces.Empty)]
         public MachineSpecificMigration XmlMigration { get; set; }
         [XmlArray("supportedComponents"),

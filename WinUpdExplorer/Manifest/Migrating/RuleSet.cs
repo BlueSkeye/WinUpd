@@ -5,6 +5,8 @@ namespace WinUpdExplorer.Manifest.Migrating
 {
     public class RuleSet
     {
+        [XmlElement("conditions")]
+        public ConditionSet Conditions { get; set; }
         [XmlAttribute("context")]
         public string Context { get; set; }
         [XmlElement("exclude")]

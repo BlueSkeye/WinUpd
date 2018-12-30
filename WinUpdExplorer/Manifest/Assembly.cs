@@ -30,6 +30,8 @@ namespace WinUpdExplorer.Manifest
         public Directory[] Directories { get; set; }
         [XmlElement("file")]
         public FileDescriptor[] Files { get; set; }
+        [XmlElement("fveUpdateAI", Namespace = XmlNamespaces.AssemblyV3)]
+        public FveUpdateAI FveUpdateAI { get; set; }
         [XmlElement("instrumentation")]
         public Instrumentation.Instrumentation Instrumentation { get; set; }
         [XmlElement("localization")]
@@ -39,6 +41,8 @@ namespace WinUpdExplorer.Manifest
         public Categoryzing.Membership[] CategoryMemberships { get; set; }
         [XmlElement("migration")]
         public Migrating.Migration Migration { get; set; }
+        [XmlElement("mof")]
+        public MofDefinition Mof { get; set; }
         [XmlElement("networkComponents")]
         public Networking.NetworkComponents NetworkComponents { get; set; }
         [XmlArray("registryKeys"),

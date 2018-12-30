@@ -17,6 +17,8 @@ namespace WinUpdExplorer.Manifest.Migrating
         public string ProcessorArchitecture { get; set; }
         [XmlAttribute("settingsVersionRange")]
         public string SettingsVersionRange { get; set; }
+        [XmlAttribute("version")]
+        public string Version { get; set; }
         [XmlAttribute("versionScope")]
         public string VersionScope { get; set; }
     }
