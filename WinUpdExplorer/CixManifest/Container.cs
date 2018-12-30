@@ -1,7 +1,7 @@
 ﻿using System.Xml;
 using System.Xml.Serialization;
 
-namespace WinUpdExplorer.Manifest
+namespace WinUpdExplorer.CixManifest
 {
     [XmlRoot(ElementName = "Container", Namespace = Container.Namespace)]
     public class Container

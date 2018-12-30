@@ -3,12 +3,10 @@ using System.Xml.Serialization;
 
 namespace WinUpdExplorer.Manifest
 {
-    public class Source
+    public class FailureAction
     {
-        [XmlElement("Hash")]
-        public HashValue Hash { get; set; }
-        [XmlAttribute("name")]
-        public string Name { get; set; }
+        [XmlAttribute("delay")]
+        public uint Delay { get; set; }
         [XmlAttribute("type")]
         public string Type { get; set; }
     }

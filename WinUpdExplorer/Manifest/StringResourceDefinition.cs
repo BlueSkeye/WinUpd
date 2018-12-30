@@ -3,10 +3,10 @@ using System.Xml.Serialization;
 
 namespace WinUpdExplorer.Manifest
 {
-    public class HashValue
+    public class StringResourceDefinition
     {
-        [XmlAttribute("alg")]
-        public string Algorithm { get; set; }
+        [XmlAttribute("id")]
+        public string Id { get; set; }
         [XmlAttribute("value")]
         public string Value { get; set; }
     }

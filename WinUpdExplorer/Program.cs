@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Xml.Serialization;
+
+using WinUpdExplorer.CixManifest;
 
 namespace WinUpdExplorer
 {
@@ -12,7 +15,7 @@ namespace WinUpdExplorer
             Initialize();
             // bool allConjectureStand = WsusScanParallelContentConjecture(); // UNUSED
             // Read the package.xml file from WSUSSCAN directory.
-            // ReadPackage(); // Disconnected for tests speed-up
+            ReadPackage(); // Disconnected for tests speed-up
 
             // Build inter Update dependencies from package content.
             //UpdateDependencyManager dependencyManager = new UpdateDependencyManager(_package);
@@ -23,11 +26,12 @@ namespace WinUpdExplorer
             // ReadUpdatesDetails(); // Disconnected for tests speed-up
 
             ReadMainManifest();
-            VerifyManifestSyntax();
+            // DisplayMainManifestStatistics();
+            LoadPSFXManifests();
             return 0;
         }
 
-        private static XmlSerializer CreateWSUSScanUpdateSerializer<T>()
+        private static XmlSerializer CreateStandardSerializer<T>()
         {
             XmlSerializer result = new XmlSerializer(typeof(T));
             result.UnknownNode += new XmlNodeEventHandler(delegate (object sender, XmlNodeEventArgs e) {
@@ -41,6 +45,67 @@ namespace WinUpdExplorer
             return result;
         }
 
+        private static void DisplayMainManifestStatistics()
+        {
+            Dictionary<string, Dictionary<UpdateItemFamily, List<string>>> perArchitectureUpdateFamilies =
+                new Dictionary<string, Dictionary<UpdateItemFamily, List<string>>>();
+            UpdateItemFamily searchedItem = new UpdateItemFamily();
+            uint totalAdditions = 0;
+            foreach (FileDescriptor descriptor in _manifest.Files) {
+                descriptor.ParseFileName();
+                if (descriptor.IsCatalog) {
+                    // Ignore catalog files.
+                    continue;
+                }
+                if (descriptor.IsMum) {
+                    // Ignore mum files.
+                    continue;
+                }
+                string architecture = descriptor.Architecture;
+                Dictionary<UpdateItemFamily, List<string>> targetArchitectureCollection;
+                if (!perArchitectureUpdateFamilies.TryGetValue(architecture, out targetArchitectureCollection)) {
+                    targetArchitectureCollection = new Dictionary<UpdateItemFamily, List<string>>(UpdateItemFamily.Comparer);
+                    perArchitectureUpdateFamilies.Add(architecture, targetArchitectureCollection);
+                }
+                searchedItem.Initialize(descriptor);
+                List<string> languages;
+                if (!targetArchitectureCollection.TryGetValue(searchedItem, out languages)) {
+                    languages = new List<string>();
+                    targetArchitectureCollection.Add((UpdateItemFamily)searchedItem.Clone(), languages);
+                }
+                string candidateLanguage = descriptor.Language;
+                if (!languages.Contains(candidateLanguage)) {
+                    totalAdditions++;
+                    languages.Add(candidateLanguage);
+                }
+            }
+            // Often a given item aggregates several files. Thus the dsplayed items count should be
+            // expected to be significantly lower than the descriptors count from the _manifest member.
+            // Combined language customization * files per descriptor can lead to 1/3 to 1/10 ratio.
+            Console.WriteLine("{0} items", totalAdditions);
+            foreach (KeyValuePair<string, Dictionary<UpdateItemFamily, List<string>>> pair in perArchitectureUpdateFamilies) {
+                Console.WriteLine(pair.Key);
+                foreach(KeyValuePair<UpdateItemFamily, List<string>> update in pair.Value) {
+                    Console.WriteLine("\t{0}v{1} #{2}", update.Key.SyntheticName, update.Key.Version, update.Value.Count);
+                }
+            }
+            return;
+        }
+
+        // TODO : Merge this with XmlFragmentSerializationWrapper::DumpContent method.
+        private static void DumpContent(this FileStream from, int startPosition = 0, int length = -1)
+        {
+            // Cap length otherwise we may miss the error messages.
+            length = (int)Math.Min(8000 * 80, from.Length);
+            byte[] buffer = new byte[length + 1024];
+            from.Position = 0;
+            int readCount = from.Read(buffer, 0, (-1 == length) ? buffer.Length : length);
+            string content = Encoding.UTF8.GetString(buffer, startPosition, readCount);
+            Console.WriteLine("============================");
+            Console.WriteLine(content);
+            Console.WriteLine("============================");
+        }
+
         private static void Initialize()
         {
             _baseDirectory = new DirectoryInfo(
@@ -52,9 +117,42 @@ namespace WinUpdExplorer
             _wsusscanDirectory = new DirectoryInfo(Path.Combine(_baseDirectory.FullName, "WSUSSCAN"));
         }
 
+        private static void LoadPSFXManifests()
+        {
+            XmlSerializer serializer = CreateStandardSerializer<Manifest.Assembly>();
+            int successCount = 0;
+            int failureCount = 0;
+            foreach(FileInfo candidate in _psfxDirectory.GetFiles("*.manifest")) {
+                using (FileStream input = File.OpenRead(candidate.FullName)) {
+                    try {
+                        Manifest.Assembly assemblyManifest = (Manifest.Assembly)serializer.Deserialize(input);
+                        if (_xmlParsingErrorEncountered) {
+                            input.DumpContent();
+                            int i = 1;
+                        }
+                        foreach(Manifest.Dependency scannedDependency in assemblyManifest.Dependency) {
+                            string discoverable = scannedDependency.Discoverable;
+                            if (("no" != discoverable) && ("false" != discoverable)) {
+                                throw new NotImplementedException();
+                            }
+                        }
+                        successCount++;
+                    }
+                    catch (Exception e) {
+                        // TODO : These are file using the "urn:schemas-microsoft-com:asm.v1" namespace.
+                        if (null != e.InnerException) {
+                            Console.WriteLine(e.InnerException.Message);
+                        }
+                        failureCount++;
+                    }
+                }
+            }
+            return;
+        }
+
         private static void ReadMainManifest()
         {
-            XmlSerializer serializer = new XmlSerializer(typeof(Manifest.Container));
+            XmlSerializer serializer = new XmlSerializer(typeof(Container));
             int firstErrorPosition = -1;
             int errorsCount = 0;
             serializer.UnknownNode += new XmlNodeEventHandler(delegate (object sender, XmlNodeEventArgs e) {
@@ -76,7 +174,7 @@ namespace WinUpdExplorer
                 return;
             });
             using (FileStream input = File.OpenRead(Path.Combine(_psfxDirectory.FullName, "_manifest_.cix.xml"))) {
-                _manifest = (Manifest.Container)serializer.Deserialize(input);
+                _manifest = (Container)serializer.Deserialize(input);
                 if (0 <= firstErrorPosition) {
                     byte[] buffer = new byte[2048];
                     input.Seek(Math.Max(0, firstErrorPosition - 400), SeekOrigin.Begin);
@@ -85,23 +183,52 @@ namespace WinUpdExplorer
                     Console.WriteLine(Encoding.UTF8.GetString(buffer, 0, readCount));
                     Console.WriteLine("=========================");
                 }
+                else {
+                    Console.WriteLine("{0} files in base manifest", _manifest.Files.Length);
+                    foreach(FileDescriptor descriptor in _manifest.Files) {
+                        if (null == descriptor.Delta) { int k = 1; }
+                        if (null == descriptor.Delta.Basis) {
+                            if ("PA30" == descriptor.Delta.Source.Type) { int z = 1; }
+                        }
+                        else {
+                            if (null == descriptor.Delta.Source) { int i = 1; }
+                            else if ("PA30" != descriptor.Delta.Source.Type) { int j = 1; }
+                        }
+                    }
+                }
             }
             return;
         }
 
         private static void ReadPackage()
         {
-            XmlSerializer serializer = new XmlSerializer(typeof(Packaging.Package));
-            serializer.UnknownNode += new XmlNodeEventHandler(delegate (object sender, XmlNodeEventArgs e) {
-                TraceUnknownNode(e);
-                return;
-            });
-            serializer.UnknownAttribute += new XmlAttributeEventHandler(delegate (object sender, XmlAttributeEventArgs e) {
-                TraceUnknownAttribute(e);
-                return;
-            });
+            XmlSerializer serializer = CreateStandardSerializer<Packaging.Package>();
             using (FileStream input = File.OpenRead(Path.Combine(_wsusscanDirectory.FullName, "package.xml"))) {
                 _package = (Packaging.Package)serializer.Deserialize(input);
+            }
+            return;
+        }
+
+        private static void ReadUpdatesDetails()
+        {
+            DirectoryInfo coreDirectory = new DirectoryInfo(
+                Path.Combine(_wsusscanDirectory.FullName, "core"));
+            DirectoryInfo extendedDirectory = new DirectoryInfo(
+                Path.Combine(_wsusscanDirectory.FullName, "extended"));
+            DirectoryInfo localizedDirectory = new DirectoryInfo(
+                Path.Combine(_wsusscanDirectory.FullName, "localized"));
+
+            XmlSerializer coreSerializer = CreateStandardSerializer<Scanning.Core.UpdateCoreDetails>();
+            XmlSerializer extendedSerializer = CreateStandardSerializer<Scanning.Extended.UpdateExtendedDetails>();
+            foreach (uint updateId in _package.EnumerateUpdateIds()) {
+                if (2858 == updateId) { continue; }
+                Scanning.Core.UpdateCoreDetails coreDetails =
+                    ReadWSUSScanUpdateDetails<Scanning.Core.UpdateCoreDetails>(coreSerializer, coreDirectory,
+                        updateId, Scanning.Core.UpdateCoreDetails.RootNodeName);
+                Scanning.Extended.UpdateExtendedDetails extendedDetails =
+                    ReadWSUSScanUpdateDetails<Scanning.Extended.UpdateExtendedDetails>(extendedSerializer, extendedDirectory,
+                        updateId, Scanning.Extended.UpdateExtendedDetails.RootNodeName);
+                continue;
             }
             return;
         }
@@ -132,30 +259,6 @@ namespace WinUpdExplorer
             }
         }
 
-        private static void ReadUpdatesDetails()
-        {
-            DirectoryInfo coreDirectory = new DirectoryInfo(
-                Path.Combine(_wsusscanDirectory.FullName, "core"));
-            DirectoryInfo extendedDirectory = new DirectoryInfo(
-                Path.Combine(_wsusscanDirectory.FullName, "extended"));
-            DirectoryInfo localizedDirectory = new DirectoryInfo(
-                Path.Combine(_wsusscanDirectory.FullName, "localized"));
-
-            XmlSerializer coreSerializer = CreateWSUSScanUpdateSerializer<Scanning.Core.UpdateCoreDetails>();
-            XmlSerializer extendedSerializer = CreateWSUSScanUpdateSerializer<Scanning.Extended.UpdateExtendedDetails>();
-            foreach (uint updateId in _package.EnumerateUpdateIds()) {
-                if (2858 == updateId) { continue; }
-                Scanning.Core.UpdateCoreDetails coreDetails =
-                    ReadWSUSScanUpdateDetails<Scanning.Core.UpdateCoreDetails>(coreSerializer, coreDirectory,
-                        updateId, Scanning.Core.UpdateCoreDetails.RootNodeName);
-                Scanning.Extended.UpdateExtendedDetails extendedDetails =
-                    ReadWSUSScanUpdateDetails<Scanning.Extended.UpdateExtendedDetails>(extendedSerializer, extendedDirectory,
-                        updateId, Scanning.Extended.UpdateExtendedDetails.RootNodeName);
-                continue;
-            }
-            return;
-        }
-
         private static void TraceUnknownAttribute(XmlAttributeEventArgs e)
         {
             _xmlParsingErrorEncountered = true;
@@ -177,45 +280,57 @@ namespace WinUpdExplorer
             return;
         }
 
-        private static void VerifyManifestSyntax()
-        {
-            XmlSerializer serializer = new XmlSerializer(typeof(Manifest.Assembly));
-            serializer.UnknownNode += new XmlNodeEventHandler(delegate (object sender, XmlNodeEventArgs e) {
-                return;
-            });
-            serializer.UnknownAttribute += new XmlAttributeEventHandler(delegate (object sender, XmlAttributeEventArgs e) {
-                return;
-            });
-            int successCount = 0;
-            int failureCount = 0;
-            foreach(FileInfo candidate in _psfxDirectory.GetFiles("*.manifest")) {
-                using (FileStream input = File.OpenRead(candidate.FullName)) {
-                    try {
-                        Manifest.Assembly assemblyManifest = (Manifest.Assembly)serializer.Deserialize(input);
-                        string discoverable = assemblyManifest.Dependency.Discoverable;
-                        if (("no" != discoverable) && ("false" != discoverable)) {
-                            throw new NotImplementedException();
-                        }
-                        successCount++;
-                    }
-                    catch (Exception e) {
-                        // TODO : These are file using the "urn:schemas-microsoft-com:asm.v1" namespace.
-                        if (null != e.InnerException) {
-                            Console.WriteLine(e.InnerException.Message);
-                        }
-                        failureCount++;
-                    }
-                }
-            }
-            return;
-        }
-
         private static DirectoryInfo _baseDirectory;
-        private static Manifest.Container _manifest;
+        private static Container _manifest;
         private static Packaging.Package _package;
         private static DirectoryInfo _packageDirectory;
         private static DirectoryInfo _psfxDirectory;
         private static bool _xmlParsingErrorEncountered;
         private static DirectoryInfo _wsusscanDirectory;
+
+        private class UpdateItemFamily : ICloneable
+        {
+            internal static IEqualityComparer<UpdateItemFamily> Comparer
+            {
+                get { return _comparer; }
+            }
+
+            internal string PublicKeyToken { get; set; }
+            internal string SyntheticName { get; set; }
+            internal Version Version { get; set; }
+
+            public object Clone()
+            {
+                return new UpdateItemFamily() {
+                    PublicKeyToken = this.PublicKeyToken,
+                    SyntheticName = this.SyntheticName,
+                    Version = this.Version
+                };
+            }
+
+            internal void Initialize(FileDescriptor from)
+            {
+                this.PublicKeyToken = from.PublicKeyToken;
+                this.SyntheticName = from.SyntheticName;
+                this.Version = from.Version;
+            }
+
+            private static IEqualityComparer<UpdateItemFamily> _comparer = new _Comparer();
+
+            private class _Comparer : IEqualityComparer<UpdateItemFamily>
+            {
+                public bool Equals(UpdateItemFamily x, UpdateItemFamily y)
+                {
+                    if ((null == x) || (null == y)) { throw new ArgumentNullException(); }
+                    return string.Equals(x.SyntheticName, y.SyntheticName)
+                        && string.Equals(x.Version, y.Version);
+                }
+
+                public int GetHashCode(UpdateItemFamily obj)
+                {
+                    return (obj.SyntheticName + "/" + obj.Version).GetHashCode();
+                }
+            }
+        }
     }
 }

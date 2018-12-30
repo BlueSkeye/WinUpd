@@ -3,9 +3,8 @@ using System.Xml.Serialization;
 
 namespace WinUpdExplorer.Manifest
 {
-    public class Basis
+    public class DependencyCollection
     {
-        [XmlAttribute("file")]
-        public uint File { get; set; }
+        // Intentionally left blank.
     }
 }

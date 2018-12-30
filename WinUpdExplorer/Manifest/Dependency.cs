@@ -7,6 +7,8 @@ namespace WinUpdExplorer.Manifest
     {
         [XmlAttribute("discoverable")]
         public string Discoverable { get; set; }
+        [XmlAttribute("resourceType")]
+        public string ResourceType { get; set; }
 
         [XmlElement("dependentAssembly")]
         public DependentAssembly DependentAssembly { get; set; }

@@ -7,7 +7,6 @@ namespace WinUpdExplorer.Manifest
     {
         [XmlAttribute("dependencyType")]
         public string DependencyType { get; set; }
-
         [XmlElement("assemblyIdentity")]
         public AssemblyIdentity AssemblyIdentity { get; set; }
     }

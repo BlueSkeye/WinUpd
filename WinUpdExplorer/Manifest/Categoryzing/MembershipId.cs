@@ -1,9 +1,9 @@
 ﻿using System.Xml;
 using System.Xml.Serialization;
 
-namespace WinUpdExplorer.Manifest
+namespace WinUpdExplorer.Manifest.Categoryzing
 {
-    public class AssemblyIdentity
+    public class MembershipId
     {
         [XmlAttribute("buildType")]
         public string BuildType { get; set; }
@@ -15,11 +15,9 @@ namespace WinUpdExplorer.Manifest
         public string ProcessorArchitecture { get; set; }
         [XmlAttribute("publicKeyToken")]
         public string PublicKeyToken { get; set; }
-        [XmlAttribute("type")]
-        public string Type { get; set; }
+        [XmlAttribute("typeName")]
+        public string TypeName { get; set; }
         [XmlAttribute("version")]
         public string Version { get; set; }
-        [XmlAttribute("versionScope")]
-        public string VersionScope { get; set; }
     }
 }

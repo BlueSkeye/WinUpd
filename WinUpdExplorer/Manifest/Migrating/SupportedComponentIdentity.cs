@@ -1,9 +1,9 @@
 ﻿using System.Xml;
 using System.Xml.Serialization;
 
-namespace WinUpdExplorer.Manifest
+namespace WinUpdExplorer.Manifest.Migrating
 {
-    public class AssemblyIdentity
+    public class SupportedComponentIdentity
     {
         [XmlAttribute("buildType")]
         public string BuildType { get; set; }
@@ -11,14 +11,12 @@ namespace WinUpdExplorer.Manifest
         public string Language { get; set; }
         [XmlAttribute("name")]
         public string Name { get; set; }
-        [XmlAttribute("processorArchitecture")]
-        public string ProcessorArchitecture { get; set; }
         [XmlAttribute("publicKeyToken")]
         public string PublicKeyToken { get; set; }
-        [XmlAttribute("type")]
-        public string Type { get; set; }
-        [XmlAttribute("version")]
-        public string Version { get; set; }
+        [XmlAttribute("processorArchitecture")]
+        public string ProcessorArchitecture { get; set; }
+        [XmlAttribute("settingsVersionRange")]
+        public string SettingsVersionRange { get; set; }
         [XmlAttribute("versionScope")]
         public string VersionScope { get; set; }
     }

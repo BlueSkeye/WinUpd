@@ -1,9 +1,27 @@
-﻿Reference materials and othe documents
-======================================
+﻿Reference materials and other documents
+=======================================
 https://docs.microsoft.com/en-us/windows/deployment/update/how-windows-update-works
 https://msfn.org/board/topic/175704-windows-update-package-structure-analysis/
 https://borncity.com/win/2016/10/21/windows-updates-fehlende-deinstallation-erzwingen/
 
+Some updates this program has been tested against
+=================================================
+windows10.0-kb4483235-x64_9d25f46d4a9da7dd295f8a6412a64eca9de4ed82.msu
+	10.0.17763.195 KB4483235 dated 19/12/2018 - 125078356 bytes
+windows10.0-kb4471324-x64_delta_ffcf11ca79d79a6fc03aca53c7a00e6106d66f07.msu
+	10.0.17763.107 KB4471324 dated 12/12/2018 - 381330859 bytes
+
+Replacement example
+-------------------
+KB4483235 replaces the following previous updates
+2018-10 Mise à jour cumulative pour Windows 10 Version 1809 pour les systèmes x64 (KB4464330)
+2018-10 Mise à jour cumulative pour Windows 10 Version 1809 pour les systèmes x64 (KB4464455)
+2018-11 Mise à jour cumulative pour Windows 10 Version 1809 pour les systèmes x64 (KB4467708)
+2018-11 Mise à jour cumulative pour Windows 10 Version 1809 pour les systèmes x64 (KB4469342)
+2018-12 Mise à jour cumulative pour Windows 10 Version 1809 pour les systèmes x64 (KB4471332)
+
+Info pending move to appropriate paragraph
+------------------------------------------
 An example script below. Notice the special way we extract the _manifest_.cix.xml file at the end.
 This is beacause the EXPAND.EXE doesn't extract this file for whatever reason.
 
@@ -80,20 +98,42 @@ file. The associated URL is not one that is directly accessible from a browser. 
 last part (filename) is the one of the CAB file to be found in the MSU. The file name is of type
 platform_KBnumber_archi_PSFX.cab.
 
-_manifset_.cix.xml
+3) PSFX directory content
+=========================
+This directory contains several kind of files and some sub-directories. The main file is _manifset_.cix.xml.
+Packages are described by a pair of (.mum & .cat) files. Then there is some .manifest files for
+individual items. Ultimately, there is sub-directories itself having f and r sub-directories where
+installable artifacts are to be found.
+
+Delta basis for 11073 is 11071.
+Delta basis for wow64_microsoft-windows-zipfldr_31bf3856ad364e35_10.0.17763.107_none_f750bde8ef30fc65\\r\\zipfldr.dll
+Is 
+
+_manifest_.cix.xml
 ==================
-A huge XML file to be found in the PSFX directory.
+A huge XML file to be found in the PSFX directory. There is an entry in this document for each of the files
+in the PSFX directory and any of its direct or indirect sub-directory, except the _manifest_.cix.xml file
+itself.
+This is very likely a kind of catalog for the IPD decompression format.
 
 PSFX manifest files
 ===================
-YYY_XXX_TTT_ZZZ_none_UUU.manifest
+XXX_YYY_ZZZ_TTT_UUU_VVV.manifest
 
-XXX = Update/Applicable/updateComponent/assemblyIdentity/@name
-YYY = Update/Applicable/updateComponent/assemblyIdentity/@processorAchitecture
-ZZZ = Update/Applicable/updateComponent/assemblyIdentity/@version
-TTT = Update/Applicable/updateComponent/assemblyIdentity/@publicKeyToken
+XXX = Update/Applicable/updateComponent/assemblyIdentity/@processorAchitecture
+YYY = Update/Applicable/updateComponent/assemblyIdentity/@name
+ZZZ = Update/Applicable/updateComponent/assemblyIdentity/@publicKeyToken
+TTT = Update/Applicable/updateComponent/assemblyIdentity/@version
+UUU = Language (aa-bb) or 'none'
+VVV = An 8 bytes hexadecimal value.
 
 See Package_545_for_KB4471332 for example
+
+.CAT files
+==========
+There is several security catalog files in the PSFX directory. We don't parse them as they are related to artifcats integrity
+and digital signature. Basically, they are ASN.1 DER encoded files with PKCS#7 signed data with and fields for Microsoft specific
+stuff (coded with Microsoft OIDs). A list of these OIDs can be found here: https://support.microsoft.com/en-us/kb/287547
 
 A1) Extraction script
 =====================
