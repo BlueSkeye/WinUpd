@@ -3,24 +3,18 @@ using System.Xml.Serialization;
 
 namespace WinUpdExplorer.Manifest
 {
-    /// <summary>Root class for ".manifest" files found in PSFX sub-directory.</summary>
+    /// <summary>Root class for ".manifest" files found in PSFX sub-directory with
+    /// "urn:schemas-microsoft-com:asm.v3" namespace.</summary>
     [XmlRoot(ElementName = "assembly", Namespace = XmlNamespaces.AssemblyV3)]
-    public class Assembly
+    public class AsmV3Assembly : AssemblyBase
     {
-        [XmlAttribute("copyright")]
-        public string Copyright { get; set; }
         [XmlAttribute("description")]
         public string Description { get; set; }
         [XmlAttribute("displayName")]
         public string DisplayName { get; set; }
         [XmlAttribute("isolated")]
         public bool Isolated { get; set; }
-        /// <summary>Always 1.0</summary>
-        [XmlAttribute("manifestVersion")]
-        public string ManifestVersion { get; set; }
 
-        [XmlElement("assemblyIdentity", IsNullable = false)]
-        public AssemblyIdentity AssemblyIdentity { get; set; }
         [XmlElement("bfsvc", Namespace = XmlNamespaces.AssemblyV3)]
         public BfService BfService { get; set; }
         [XmlElement("configuration")]
@@ -35,7 +29,7 @@ namespace WinUpdExplorer.Manifest
             XmlArrayItem(ElementName = "directory", Type = typeof(Directory))]
         public Directory[] Directories { get; set; }
         [XmlElement("file")]
-        public FileDescriptor[] Files { get; set; }
+        public AsmV3FileDescriptor[] Files { get; set; }
         [XmlElement("firewallGroupActivation",Namespace = XmlNamespaces.AssemblyV3)]
         public FirewallGroupActivation FirewallGroupActivation { get; set; }
         [XmlElement("firewallRule", Namespace = XmlNamespaces.AssemblyV3)]
@@ -53,9 +47,6 @@ namespace WinUpdExplorer.Manifest
         public Instrumentation.Instrumentation Instrumentation { get; set; }
         [XmlElement("localization")]
         public Localization Localization { get; set; }
-        [XmlArray("memberships"),
-            XmlArrayItem(ElementName = "categoryMembership", Type = typeof(Categoryzing.Membership))]
-        public Categoryzing.Membership[] CategoryMemberships { get; set; }
         [XmlElement("migration")]
         public Migrating.Migration Migration { get; set; }
         [XmlElement("mof")]

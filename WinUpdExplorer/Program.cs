@@ -119,29 +119,49 @@ namespace WinUpdExplorer
             _wsusscanDirectory = new DirectoryInfo(Path.Combine(_baseDirectory.FullName, "WSUSSCAN"));
         }
 
+        private static XmlSerializer FindRelevantSerializer(FileStream from, XmlSerializer asmV1Serializer,
+            XmlSerializer asmV3Serializer)
+        {
+            byte[] buffer = new byte[1024];
+            try { from.Read(buffer, 0, buffer.Length); }
+            finally { from.Position = 0; }
+            // TODO : Unsafe in case of multibyte encoding.
+            string data = Encoding.UTF8.GetString(buffer);
+            return (-1 != data.IndexOf(Manifest.XmlNamespaces.AssemblyV1))
+                ? asmV1Serializer
+                : asmV3Serializer;
+        }
+
         private static void LoadPSFXManifests()
         {
-            XmlSerializer serializer = CreateStandardSerializer<Manifest.Assembly>();
+            XmlSerializer asmV1Serializer = CreateStandardSerializer<Manifest.AsmV1Assembly>();
+            XmlSerializer asmV3Serializer = CreateStandardSerializer<Manifest.AsmV3Assembly>();
             int ignoredCount = 0;
             int failureCount = 0;
             int successCount = 0;
             foreach (FileInfo candidate in _psfxDirectory.GetFiles("*.manifest")) {
                 using (FileStream input = File.OpenRead(candidate.FullName)) {
                     try {
-                        Manifest.Assembly assemblyManifest = (Manifest.Assembly)serializer.Deserialize(input);
+                        XmlSerializer targetSerializer = FindRelevantSerializer(input, asmV1Serializer, asmV3Serializer);
+                        if (object.ReferenceEquals(targetSerializer, asmV3Serializer)) {
+                            continue;
+                        }
+                        // TODO : Find a way to disambiguate ahead of time the appropriate version and
+                        // the relevant serializer.
+                        Manifest.AssemblyBase assemblyManifest = (Manifest.AssemblyBase)targetSerializer.Deserialize(input);
                         if (_xmlParsingErrorEncountered) {
                             Console.WriteLine("{0} files succeeded", successCount);
                             input.DumpContent();
                             int i = 1;
                         }
-                        if (null != assemblyManifest.Dependency) {
-                            foreach(Manifest.Dependency scannedDependency in assemblyManifest.Dependency) {
-                                string discoverable = scannedDependency.Discoverable;
-                                if (("no" != discoverable) && ("false" != discoverable)) {
-                                    throw new NotImplementedException();
-                                }
-                            }
-                        }
+                        //if (null != assemblyManifest.Dependency) {
+                        //    foreach(Manifest.Dependency scannedDependency in assemblyManifest.Dependency) {
+                        //        string discoverable = scannedDependency.Discoverable;
+                        //        if (("no" != discoverable) && ("false" != discoverable)) {
+                        //            throw new NotImplementedException();
+                        //        }
+                        //    }
+                        //}
                         successCount++;
                     }
                     catch (Exception e) {
@@ -150,7 +170,7 @@ namespace WinUpdExplorer
                         for (scannedException = e;
                             null != scannedException.InnerException;
                             scannedException = scannedException.InnerException) ;
-                        if (!scannedException.Message.StartsWith("<assembly xmlns='urn:schemas-microsoft-com:asm.v1'>")) {
+                        if (!scannedException.Message.StartsWith("<assembly xmlns='urn:schemas-microsoft-com:asm.v3'>")) {
                             Console.WriteLine(scannedException.Message);
                             failureCount++;
                         }

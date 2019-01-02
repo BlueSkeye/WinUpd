@@ -43,6 +43,9 @@
     <Compile Include="CixManifest\HashValue.cs" />
     <Compile Include="CixManifest\Source.cs" />
     <Compile Include="Manifest\AccessControl.cs" />
+    <Compile Include="Manifest\AsmV1Assembly.cs" />
+    <Compile Include="Manifest\AsmV1FileDescriptor.cs" />
+    <Compile Include="Manifest\AssemblyBase.cs" />
     <Compile Include="Manifest\Categoryzing\Filter.cs" />
     <Compile Include="Manifest\Categoryzing\ProviderOrder.cs" />
     <Compile Include="Manifest\Configuration\AssemblyConfiguration.cs" />
@@ -60,6 +63,7 @@
     <Compile Include="Manifest\DependencyCollection.cs" />
     <Compile Include="Manifest\DigestMethod.cs" />
     <Compile Include="Manifest\Directory.cs" />
+    <Compile Include="Manifest\FileDescriptorBase.cs" />
     <Compile Include="Manifest\FirewallGroupActivation.cs" />
     <Compile Include="Manifest\FirewallRule.cs" />
     <Compile Include="Manifest\FveUpdateAI.cs" />
@@ -92,7 +96,7 @@
     <Compile Include="Manifest\Instrumentation\Events.cs" />
     <Compile Include="Manifest\FailureAction.cs" />
     <Compile Include="Manifest\FailureActions.cs" />
-    <Compile Include="Manifest\FileDescriptor.cs" />
+    <Compile Include="Manifest\AsmV3FileDescriptor.cs" />
     <Compile Include="Manifest\HashDescriptor.cs" />
     <Compile Include="Manifest\Instrumentation\ImportChannel.cs" />
     <Compile Include="Manifest\InformationFile.cs" />
@@ -175,6 +179,7 @@
     <Compile Include="Manifest\Migrating\Variable.cs" />
     <Compile Include="Manifest\UnattendAction.cs" />
     <Compile Include="Manifest\UrlDefinition.cs" />
+    <Compile Include="Manifest\WindowClass.cs" />
     <Compile Include="Manifest\XmlNamespaces.cs" />
     <Compile Include="Packaging\Basis.cs" />
     <Compile Include="Packaging\Category.cs" />
@@ -226,7 +231,7 @@
     <Compile Include="Packaging\IdReference.cs" />
     <Compile Include="Packaging\LanguageBoundReference.cs" />
     <Compile Include="Packaging\Container.cs" />
-    <Compile Include="Manifest\Assembly.cs" />
+    <Compile Include="Manifest\AsmV3Assembly.cs" />
     <Compile Include="Manifest\AssemblyIdentity.cs" />
     <Compile Include="Manifest\Dependency.cs" />
     <Compile Include="Manifest\DependentAssembly .cs" />
