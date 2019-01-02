@@ -5,6 +5,10 @@ namespace WinUpdExplorer.Manifest
 {
     public class FailureActions
     {
+        [XmlAttribute("command")]
+        public string Command { get; set; }
+        [XmlAttribute("rebootMessage")]
+        public string RebootMessage { get; set; }
         [XmlAttribute("resetPeriod")]
         public uint ResetPeriod { get; set; }
         [XmlArray("actions"),

@@ -5,6 +5,8 @@ namespace WinUpdExplorer.Manifest.Networking
 {
     public class NetworkComponents
     {
+        [XmlElement("clientDriver")]
+        public ClientDriver ClientDriver { get; set; }
         [XmlElement("filterDriver")]
         public FilterDriver FilterDriver { get; set; }
         [XmlElement("netAdapterDriver")]

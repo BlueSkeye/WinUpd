@@ -12,6 +12,6 @@ namespace WinUpdExplorer.Manifest.Migrating
         [XmlAttribute("file")]
         public string File { get; set; }
         [XmlAttribute("offlineApply")]
-        public bool OfflineApply { get; set; }
+        public string OfflineApply { get; set; }
     }
 }

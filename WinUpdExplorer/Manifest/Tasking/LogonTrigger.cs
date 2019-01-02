@@ -3,7 +3,7 @@ using System.Xml.Serialization;
 
 namespace WinUpdExplorer.Manifest.Tasking
 {
-    public class ScheduledTaskTriggerBase
+    public class LogonTrigger : TriggerBase
     {
     }
 }

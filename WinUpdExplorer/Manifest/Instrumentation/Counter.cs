@@ -5,6 +5,11 @@ namespace WinUpdExplorer.Manifest.Instrumentation
 {
     public class Counter
     {
+        [XmlAttribute("baseID")]
+        public uint BaseID { get; set; }
+        [XmlArray("counterAttributes"),
+            XmlArrayItem("counterAttribute")]
+        public CounterAttribute[] Attributes { get; set; }
         [XmlAttribute("defaultScale")]
         public int DefaultScale { get; set; }
         [XmlAttribute("description")]

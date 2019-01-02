@@ -1,8 +1,8 @@
 ﻿
 namespace WinUpdExplorer.Manifest.Migrating
 {
-    public class Exclusion : InclusionExclusionBase
+    public class Exclusion : FilteredContent
     {
-        // Intentionally left blank
+        // Intentionally left blank. Members are in the base class.
     }
 }

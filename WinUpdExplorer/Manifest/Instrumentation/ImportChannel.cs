@@ -5,5 +5,7 @@ namespace WinUpdExplorer.Manifest.Instrumentation
 {
     public class ImportChannel : ChannelBase
     {
+        [XmlAttribute("symbol")]
+        public string Symbol { get; set; }
     }
 }

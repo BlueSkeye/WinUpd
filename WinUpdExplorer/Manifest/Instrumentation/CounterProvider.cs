@@ -8,8 +8,12 @@ namespace WinUpdExplorer.Manifest.Instrumentation
     {
         [XmlAttribute("applicationIdentity")]
         public string ApplicationIdentity { get; set; }
+        [XmlAttribute("callback")]
+        public string Callback { get; set; }
         [XmlAttribute("providerGuid")]
         public Guid Id { get; set; }
+        [XmlAttribute("providerName")]
+        public string ProviderName { get; set; }
         [XmlAttribute("providerType")]
         public string Type { get; set; }
         [XmlAttribute("symbol")]

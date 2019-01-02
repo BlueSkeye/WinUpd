@@ -11,6 +11,7 @@
         internal const string AssemblyV3 = "urn:schemas-microsoft-com:asm.v3";
         internal const string Task = "http://schemas.microsoft.com/windows/2004/02/mit/task";
         internal const string WindowsEvents = "http://manifests.microsoft.com/win/2004/08/windows/events";
+        internal const string WininetConfiguration = "WinINet-Configuration";
         internal const string WMIConfigurationState = "http://schemas.microsoft.com/WMIConfig/2002/State";
         internal const string XsdSchema = "http://www.w3.org/2001/XMLSchema";
     }

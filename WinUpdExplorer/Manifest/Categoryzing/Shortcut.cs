@@ -21,5 +21,7 @@ namespace WinUpdExplorer.Manifest.Categoryzing
         public string TargetPath { get; set; }
         [XmlAttribute("windowStyle")]
         public string WindowStyle { get; set; }
+        [XmlAttribute("workingDirectory")]
+        public string WorkingDirectory { get; set; }
     }
 }

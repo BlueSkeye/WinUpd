@@ -3,7 +3,7 @@ using System.Xml.Serialization;
 
 namespace WinUpdExplorer.Manifest.Tasking
 {
-    public class ScheduledTaskRegistrationInfo
+    public class RegistrationInfo
     {
         [XmlElement("Author")]
         public string Author { get; set; }
@@ -17,5 +17,7 @@ namespace WinUpdExplorer.Manifest.Tasking
         public string Source { get; set; }
         [XmlElement("URI")]
         public string URI { get; set; }
+        [XmlElement("Version")]
+        public string Version { get; set; }
     }
 }

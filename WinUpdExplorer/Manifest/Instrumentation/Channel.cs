@@ -15,6 +15,8 @@ namespace WinUpdExplorer.Manifest.Instrumentation
         public ChannelLogging Logging { get; set; }
         [XmlAttribute("message")]
         public string Message { get; set; }
+        [XmlElement("publishing")]
+        public Publishing Publishing { get; set; }
         [XmlAttribute("symbol")]
         public string Symbol { get; set; }
         [XmlAttribute("type")]

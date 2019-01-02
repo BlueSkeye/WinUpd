@@ -12,7 +12,7 @@ namespace WinUpdExplorer.Manifest
         [XmlAttribute("destinationPath")]
         public string DestinationPath { get; set; }
         [XmlAttribute("owner")]
-        public bool Owner { get; set; }
+        public string Owner { get; set; }
         [XmlElement("securityDescriptor")]
         public SecurityDescriptor SecurityDescriptor { get; set; }
     }

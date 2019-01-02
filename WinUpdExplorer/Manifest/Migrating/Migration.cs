@@ -5,6 +5,10 @@ namespace WinUpdExplorer.Manifest.Migrating
 {
     public class Migration
     {
+        [XmlAttribute("offlineApply")]
+        public string OfflineApply { get; set; }
+        [XmlAttribute("optimizePatterns")]
+        public string OptimizePatterns { get; set; }
         [XmlAttribute("scope")]
         public string Scope { get; set; }
         [XmlAttribute("settingsVersion")]
@@ -15,9 +19,11 @@ namespace WinUpdExplorer.Manifest.Migrating
         [XmlElement("migrationDisplayID", Namespace = XmlNamespaces.AssemblyV3)]
         public string DisplayID { get; set; }
         [XmlElement("migXml", Namespace = XmlNamespaces.Empty)]
-        public MachineSpecificMigration XmlMigration { get; set; }
+        public MigrationXml XmlMigration { get; set; }
         [XmlArray("supportedComponents"),
             XmlArrayItem(ElementName = "supportedComponent", Type = typeof(SupportedComponent))]
         public SupportedComponent[] SupportedComponents { get; set; }
+        [XmlElement("uninstall", Namespace = XmlNamespaces.AssemblyV3)]
+        public Uninstall Uninstall { get; set; }
     }
 }

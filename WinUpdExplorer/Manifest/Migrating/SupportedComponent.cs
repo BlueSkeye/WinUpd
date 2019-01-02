@@ -10,7 +10,9 @@ namespace WinUpdExplorer.Manifest.Migrating
         [XmlElement("machineSpecific")]
         public MachineSpecific MachineSpecific { get; set; }
         [XmlElement("migXml", Namespace = XmlNamespaces.Empty)]
-        public MachineSpecificMigration XmlMigration { get; set; }
+        public MigrationXml XmlMigration { get; set; }
+        [XmlElement("migXml")]
+        public MigrationXml _1 { get { return XmlMigration; } set { XmlMigration = value; } }
         [XmlElement("supportedComponentIdentity", Namespace = XmlNamespaces.AssemblyV3)]
         public SupportedComponentIdentity SupportedComponentIdentity { get; set; }
     }

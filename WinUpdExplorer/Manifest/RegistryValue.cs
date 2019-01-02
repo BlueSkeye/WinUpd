@@ -5,6 +5,8 @@ namespace WinUpdExplorer.Manifest
 {
     public class RegistryValue
     {
+        [XmlAttribute("IEDownlevelValue")]
+        public string IEDownlevelValue { get; set; }
         [XmlAttribute("mutable")]
         public bool Mutable { get; set; }
         [XmlAttribute("name")]

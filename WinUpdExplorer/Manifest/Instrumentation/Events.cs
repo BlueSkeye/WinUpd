@@ -7,6 +7,9 @@ namespace WinUpdExplorer.Manifest.Instrumentation
     {
         [XmlElement("cmi")]
         public Cmi Cmi { get; set; }
+        [XmlArray("messageTable"),
+            XmlArrayItem(ElementName = "message", Type = typeof(Message))]
+        public Message[] Messages { get; set; }
         [XmlElement("provider")]
         public EventProvider[] Provider { get; set; }
     }

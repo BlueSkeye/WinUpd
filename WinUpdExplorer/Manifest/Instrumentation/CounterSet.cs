@@ -7,7 +7,7 @@ namespace WinUpdExplorer.Manifest.Instrumentation
     public class CounterSet
     {
         [XmlElement("counter")]
-        public PerformanceCounter[] PerformanceCounters { get; set; }
+        public Counter[] Counters { get; set; }
         [XmlAttribute("description")]
         public string Description { get; set; }
         [XmlAttribute("descriptionID")]

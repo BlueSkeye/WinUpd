@@ -7,9 +7,13 @@ namespace WinUpdExplorer.Manifest
     {
         [XmlAttribute("keyName")]
         public string KeyName { get; set; }
+        [XmlAttribute("owner")]
+        public string Owner { get; set; }
 
         [XmlElement("overridable")]
-        public OverridableRegistryKey Overriding { get; set; }
+        public OverridableRegistryKey[] Overriding { get; set; }
+        [XmlAttribute("perUserVirtualization")]
+        public string PerUserVirtualization { get; set; }
         [XmlElement("registryValue")]
         public RegistryValue[] RegistryValues { get; set; }
         [XmlElement("securityDescriptor")]

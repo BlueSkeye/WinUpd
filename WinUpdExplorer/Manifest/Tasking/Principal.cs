@@ -7,6 +7,10 @@ namespace WinUpdExplorer.Manifest.Tasking
     {
         [XmlAttribute("id")]
         public string Id { get; set; }
+        [XmlElement("GroupId")]
+        public string GroupId { get; set; }
+        [XmlElement("RunLevel")]
+        public string RunLevel { get; set; }
         [XmlElement("UserId")]
         public string UserId { get; set; }
     }

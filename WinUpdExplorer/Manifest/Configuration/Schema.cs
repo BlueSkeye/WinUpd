@@ -1,9 +1,9 @@
 ﻿using System.Xml;
 using System.Xml.Serialization;
 
-namespace WinUpdExplorer.Manifest
+namespace WinUpdExplorer.Manifest.Configuration
 {
-    public class ConfigurationSchema
+    public class Schema
     {
         [XmlAnyElement()]
         public object[] Elements { get; set; }

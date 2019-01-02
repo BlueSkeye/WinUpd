@@ -3,13 +3,12 @@ using System.Xml.Serialization;
 
 namespace WinUpdExplorer.Manifest.Migrating
 {
-    public class MachineSpecificMigration
+    public class MigrationXml : Detectable
     {
-        [XmlArray("detects"),
-            XmlArrayItem(ElementName = "detect", Type = typeof(Detector))]
-        public Detector[] Detect { get; set; }
         [XmlElement("environment")]
         public Environment Environment { get; set; }
+        [XmlElement("migrationDisplayID")]
+        public string MigrationDisplayID { get; set; }
         [XmlElement("plugin")]
         public Plugin Plugin { get; set; }
         [XmlElement("rules")]

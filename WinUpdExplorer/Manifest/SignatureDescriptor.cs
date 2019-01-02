@@ -5,9 +5,11 @@ namespace WinUpdExplorer.Manifest
 {
     public class SignatureDescriptor
     {
-        [XmlAttribute("PETrust")]
-        public bool PETrust { get; set; }
+        [XmlAttribute("DRMLevel")]
+        public uint DRMLevel { get; set; }
         [XmlAttribute("pageHash")]
         public bool PageHash { get; set; }
+        [XmlAttribute("PETrust")]
+        public bool PETrust { get; set; }
     }
 }

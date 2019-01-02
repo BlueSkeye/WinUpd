@@ -6,6 +6,6 @@ namespace WinUpdExplorer.Manifest
     public class SignatureInformation
     {
         [XmlElement("signatureDescriptor")]
-        public SignatureDescriptor SignatureDescriptor { get; set; }
+        public SignatureDescriptor[] SignatureDescriptors { get; set; }
     }
 }

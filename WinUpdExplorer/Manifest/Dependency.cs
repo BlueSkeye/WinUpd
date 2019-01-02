@@ -7,6 +7,8 @@ namespace WinUpdExplorer.Manifest
     {
         [XmlAttribute("discoverable")]
         public string Discoverable { get; set; }
+        [XmlAttribute("offlineInstall")]
+        public bool OfflineInstall { get; set; }
         [XmlAttribute("resourceType")]
         public string ResourceType { get; set; }
 

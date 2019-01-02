@@ -3,7 +3,7 @@ using System.Xml.Serialization;
 
 namespace WinUpdExplorer.Manifest.Tasking
 {
-    public class ScheduledTaskExecAction : ScheduledTaskActionBase
+    public class ExecAction : ActionBase
     {
         [XmlElement("Arguments")]
         public string Arguments { get; set; }

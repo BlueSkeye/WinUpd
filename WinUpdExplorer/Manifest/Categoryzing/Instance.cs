@@ -5,6 +5,10 @@ namespace WinUpdExplorer.Manifest.Categoryzing
 {
     public class Instance
     {
+        [XmlElement("filter", Namespace = XmlNamespaces.AssemblyV3)]
+        public Filter Filter { get; set; }
+        [XmlElement("providerOrder")]
+        public ProviderOrder ProviderOrder { get; set; }
         [XmlAttribute("subcategory")]
         public string Subcategory { get; set; }
         [XmlElement("serviceData")]

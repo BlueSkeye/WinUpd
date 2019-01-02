@@ -96,7 +96,9 @@ namespace WinUpdExplorer
         private static void DumpContent(this FileStream from, int startPosition = 0, int length = -1)
         {
             // Cap length otherwise we may miss the error messages.
-            length = (int)Math.Min(8000 * 80, from.Length);
+            if (-1 == length) {
+                length = (int)Math.Min(8000 * 80, from.Length);
+            }
             byte[] buffer = new byte[length + 1024];
             from.Position = 0;
             int readCount = from.Read(buffer, 0, (-1 == length) ? buffer.Length : length);
@@ -120,30 +122,41 @@ namespace WinUpdExplorer
         private static void LoadPSFXManifests()
         {
             XmlSerializer serializer = CreateStandardSerializer<Manifest.Assembly>();
-            int successCount = 0;
+            int ignoredCount = 0;
             int failureCount = 0;
-            foreach(FileInfo candidate in _psfxDirectory.GetFiles("*.manifest")) {
+            int successCount = 0;
+            foreach (FileInfo candidate in _psfxDirectory.GetFiles("*.manifest")) {
                 using (FileStream input = File.OpenRead(candidate.FullName)) {
                     try {
                         Manifest.Assembly assemblyManifest = (Manifest.Assembly)serializer.Deserialize(input);
                         if (_xmlParsingErrorEncountered) {
+                            Console.WriteLine("{0} files succeeded", successCount);
                             input.DumpContent();
                             int i = 1;
                         }
-                        foreach(Manifest.Dependency scannedDependency in assemblyManifest.Dependency) {
-                            string discoverable = scannedDependency.Discoverable;
-                            if (("no" != discoverable) && ("false" != discoverable)) {
-                                throw new NotImplementedException();
+                        if (null != assemblyManifest.Dependency) {
+                            foreach(Manifest.Dependency scannedDependency in assemblyManifest.Dependency) {
+                                string discoverable = scannedDependency.Discoverable;
+                                if (("no" != discoverable) && ("false" != discoverable)) {
+                                    throw new NotImplementedException();
+                                }
                             }
                         }
                         successCount++;
                     }
                     catch (Exception e) {
                         // TODO : These are file using the "urn:schemas-microsoft-com:asm.v1" namespace.
-                        if (null != e.InnerException) {
-                            Console.WriteLine(e.InnerException.Message);
+                        Exception scannedException;
+                        for (scannedException = e;
+                            null != scannedException.InnerException;
+                            scannedException = scannedException.InnerException) ;
+                        if (!scannedException.Message.StartsWith("<assembly xmlns='urn:schemas-microsoft-com:asm.v1'>")) {
+                            Console.WriteLine(scannedException.Message);
+                            failureCount++;
                         }
-                        failureCount++;
+                        else {
+                            ignoredCount++;
+                        }
                     }
                 }
             }

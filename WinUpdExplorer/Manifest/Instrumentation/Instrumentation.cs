@@ -7,7 +7,10 @@ namespace WinUpdExplorer.Manifest.Instrumentation
     {
         [XmlElement("events", Namespace = XmlNamespaces.Events)]
         public Events Events { get; set; }
-        [XmlElement("counters", Namespace = XmlNamespaces.Counters)]
         public CounterCollection Counters { get; set; }
+        [XmlElement("counters", Namespace = XmlNamespaces.Counters)]
+        public CounterCollection _1 { get { return Counters; } set { Counters = value; } }
+        [XmlElement("counters", Namespace = XmlNamespaces.AssemblyV3)]
+        public CounterCollection _2 { get { return Counters; } set { Counters = value; } }
     }
 }

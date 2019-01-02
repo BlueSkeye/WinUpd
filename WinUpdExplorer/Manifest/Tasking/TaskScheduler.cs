@@ -6,6 +6,6 @@ namespace WinUpdExplorer.Manifest.Tasking
     public class TaskScheduler
     {
         [XmlElement("Task", Namespace = XmlNamespaces.Task)]
-        public ScheduledTask Task { get; set; }
+        public ScheduledTask[] Tasks { get; set; }
     }
 }

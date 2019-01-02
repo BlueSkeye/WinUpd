@@ -7,6 +7,8 @@ namespace WinUpdExplorer.Manifest.Migrating
     {
         [XmlAttribute("name")]
         public string Name { get; set; }
+        [XmlElement("script")]
+        public string Script { get; set; }
         [XmlElement("text")]
         public string Text { get; set; }
     }

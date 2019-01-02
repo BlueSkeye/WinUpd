@@ -24,6 +24,6 @@ namespace WinUpdExplorer.Manifest.Instrumentation
         [XmlArray("channels"),
             XmlArrayItem(ElementName = "importChannel", Type = typeof(ImportChannel)),
             XmlArrayItem(ElementName = "channel", Type = typeof(Channel))]
-        public ChannelBase[] ImportChannels { get; set; }
+        public ChannelBase[] Channels { get; set; }
     }
 }

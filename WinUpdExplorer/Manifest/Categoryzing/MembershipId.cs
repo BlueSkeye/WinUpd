@@ -19,5 +19,7 @@ namespace WinUpdExplorer.Manifest.Categoryzing
         public string TypeName { get; set; }
         [XmlAttribute("version")]
         public string Version { get; set; }
+        [XmlAttribute("versionScope")]
+        public string VersionScope { get; set; }
     }
 }

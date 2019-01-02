@@ -6,6 +6,6 @@ namespace WinUpdExplorer.Manifest.Migrating
     public class Detector
     {
         [XmlElement("condition")]
-        public string Condition { get; set; }
+        public string[] Conditions { get; set; }
     }
 }

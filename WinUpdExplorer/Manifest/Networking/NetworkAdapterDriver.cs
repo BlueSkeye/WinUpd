@@ -3,7 +3,7 @@ using System.Xml.Serialization;
 
 namespace WinUpdExplorer.Manifest.Networking
 {
-    public class NetworkAdapterDriver
+    public class NetworkAdapterDriver : DriverBase
     {
         [XmlAttribute("id")]
         public string Id { get; set; }
@@ -17,10 +17,5 @@ namespace WinUpdExplorer.Manifest.Networking
         public string MediaType { get; set; }
         [XmlAttribute("physicalMediaType")]
         public string PhysicalMediaType { get; set; }
-
-        [XmlElement("bind")]
-        public NetworkBinding[] Bindings { get; set; }
-        [XmlElement("property")]
-        public NetworkAdapterProperty[] Properties { get; set; }
     }
 }

@@ -7,5 +7,7 @@ namespace WinUpdExplorer.Manifest
     {
         [XmlAttribute("name")]
         public string Name { get; set; }
+        [XmlAttribute("offline")]
+        public bool OffLine { get; set; }
     }
 }

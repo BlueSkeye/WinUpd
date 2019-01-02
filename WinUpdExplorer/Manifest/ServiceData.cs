@@ -5,6 +5,8 @@ namespace WinUpdExplorer.Manifest
 {
     public class ServiceData
     {
+        [XmlAttribute("failureActionsFlag")]
+        public bool FailureActionsFlag { get; set; }
         [XmlAttribute("dependOnService")]
         public string DependOnService { get; set; }
         [XmlAttribute("description")]

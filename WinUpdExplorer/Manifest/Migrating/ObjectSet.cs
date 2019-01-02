@@ -3,10 +3,11 @@ using System.Xml.Serialization;
 
 namespace WinUpdExplorer.Manifest.Migrating
 {
-    public class InclusionExclusionBase
+    public class ObjectSet
     {
-        [XmlArray("objectSet"),
-            XmlArrayItem(ElementName = "pattern", Type = typeof(Pattern))]
+        [XmlElement("content")]
+        public FilteredContent[] Contents { get; set; }
+        [XmlElement("pattern")]
         public Pattern[] Patterns { get; set; }
     }
 }
