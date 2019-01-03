@@ -21,19 +21,17 @@ namespace WinUpdExplorer.Manifest
         public Configuration.AssemblyConfiguration Configuration { get; set; }
         [XmlElement("deconstructionTool")]
         public DeconstructionTool DeconstructionTool { get; set; }
-        [XmlElement("dependency", IsNullable = false)]
-        public Dependency[] Dependency { get; set; }
         [XmlElement("deployment", IsNullable = true)]
         public string Deployment { get; set; }
         [XmlArray("directories"),
-            XmlArrayItem(ElementName = "directory", Type = typeof(Directory))]
-        public Directory[] Directories { get; set; }
+            XmlArrayItem(ElementName = "directory", Type = typeof(Files.Directory))]
+        public Files.Directory[] Directories { get; set; }
         [XmlElement("file")]
-        public AsmV3FileDescriptor[] Files { get; set; }
+        public Files.AsmV3FileDescriptor[] Files { get; set; }
         [XmlElement("firewallGroupActivation",Namespace = XmlNamespaces.AssemblyV3)]
-        public FirewallGroupActivation FirewallGroupActivation { get; set; }
+        public Firewalling.FirewallGroupActivation FirewallGroupActivation { get; set; }
         [XmlElement("firewallRule", Namespace = XmlNamespaces.AssemblyV3)]
-        public laxistFirewallRule[] FirewallRules { get; set; }
+        public Firewalling.laxistFirewallRule[] FirewallRules { get; set; }
         [XmlElement("fveUpdateAI", Namespace = XmlNamespaces.AssemblyV3)]
         public FveUpdateAI FveUpdateAI { get; set; }
         [XmlArray("genericCommands"),
@@ -46,7 +44,7 @@ namespace WinUpdExplorer.Manifest
         [XmlElement("instrumentation")]
         public Instrumentation.Instrumentation Instrumentation { get; set; }
         [XmlElement("localization")]
-        public Localization Localization { get; set; }
+        public Globalization.Localization Localization { get; set; }
         [XmlElement("migration")]
         public Migrating.Migration Migration { get; set; }
         [XmlElement("mof")]
@@ -54,8 +52,8 @@ namespace WinUpdExplorer.Manifest
         [XmlElement("networkComponents")]
         public Networking.NetworkComponents NetworkComponents { get; set; }
         [XmlArray("registryKeys"),
-            XmlArrayItem(ElementName = "registryKey", Type = typeof(RegistryKey))]
-        public RegistryKey[] RegistryKeys { get; set; }
+            XmlArrayItem(ElementName = "registryKey", Type = typeof(Registry.RegistryKey))]
+        public Registry.RegistryKey[] RegistryKeys { get; set; }
         [XmlElement("satelliteCategory")]
         public SatelliteCategory SatelliteCategory { get; set; }
         [XmlElement("taskScheduler", Namespace = XmlNamespaces.AssemblyV3)]
@@ -67,7 +65,7 @@ namespace WinUpdExplorer.Manifest
         // TODO : Make this a class once we know the members.
         public string TimezoneresourceAI { get; set; }
         [XmlElement("trustInfo")]
-        public TrustInfo TrustInfo { get; set; }
+        public Securing.TrustInfo TrustInfo { get; set; }
         [XmlArray("unattendActions"),
             XmlArrayItem(ElementName = "unattendAction", Type = typeof(UnattendAction), Namespace = XmlNamespaces.AssemblyV3)]
         public UnattendAction[] UnattendActions { get; set; }

@@ -2,7 +2,6 @@
 using System.Xml.Serialization;
 
 namespace WinUpdExplorer.Manifest.Categoryzing
-
 {
     public class Membership
     {

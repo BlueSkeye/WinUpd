@@ -12,6 +12,6 @@ namespace WinUpdExplorer.Manifest
         public string Noinheritable { get; set; }
 
         [XmlElement("file")]
-        public AsmV1FileDescriptor[] Files { get; set; }
+        public Files.AsmV1FileDescriptor[] Files { get; set; }
     }
 }
