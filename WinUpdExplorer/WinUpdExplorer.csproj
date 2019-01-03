@@ -36,6 +36,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AssemblyCommonBase.cs" />
+    <Compile Include="AssemblyIdentityCatalog.cs" />
     <Compile Include="CixManifest\Basis.cs" />
     <Compile Include="CixManifest\Container.cs" />
     <Compile Include="CixManifest\Delta.cs" />
@@ -188,7 +190,6 @@
     <Compile Include="Mum\AsmV1Assembly.cs" />
     <Compile Include="Mum\AsmV3Assembly.cs" />
     <Compile Include="Mum\AssemblyBase.cs" />
-    <Compile Include="Mum\AssemblyIdentity.cs" />
     <Compile Include="Mum\Component.cs" />
     <Compile Include="Mum\CustomInformation.cs" />
     <Compile Include="Mum\Driver.cs" />
@@ -252,7 +253,7 @@
     <Compile Include="Packaging\LanguageBoundReference.cs" />
     <Compile Include="Packaging\Container.cs" />
     <Compile Include="Manifest\AsmV3Assembly.cs" />
-    <Compile Include="Manifest\AssemblyIdentity.cs" />
+    <Compile Include="AssemblyIdentity.cs" />
     <Compile Include="Manifest\Dependencies\Dependency.cs" />
     <Compile Include="Manifest\Dependencies\DependentAssembly .cs" />
     <Compile Include="Packaging\NamedItem.cs" />

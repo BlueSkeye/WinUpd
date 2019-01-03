@@ -17,7 +17,11 @@ namespace WinUpdExplorer.Mum
         public string Restart { get; set; }
 
         [XmlElement("assemblyIdentity")]
-        public AssemblyIdentity AssemblyIdentity { get; set; }
+        public AssemblyIdentity AssemblyIdentity
+        {
+            get { return _assemblyIdentity; }
+            set { _assemblyIdentity = AssemblyIdentityCatalog.Singleton.Register(value); }
+        }
         [XmlElement("customInformation", Namespace = XmlNamespaces.AssemblyV3)]
         public CustomInformation CustomInformation { get; set; }
         [XmlElement("installerAssembly")]
@@ -28,5 +32,7 @@ namespace WinUpdExplorer.Mum
         public Parent Parent { get; set; }
         [XmlElement("update")]
         public Update[] Updates { get; set; }
+
+        private AssemblyIdentity _assemblyIdentity;
     }
 }

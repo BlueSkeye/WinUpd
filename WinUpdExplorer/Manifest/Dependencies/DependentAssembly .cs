@@ -8,8 +8,14 @@ namespace WinUpdExplorer.Manifest.Dependencies
         [XmlAttribute("dependencyType")]
         public string DependencyType { get; set; }
         [XmlElement("assemblyIdentity")]
-        public AssemblyIdentity AssemblyIdentity { get; set; }
+        public AssemblyIdentity AssemblyIdentity
+        {
+            get { return _assemblyIdentity; }
+            set { _assemblyIdentity = AssemblyIdentityCatalog.Singleton.Register(value); }
+        }
         [XmlElement("bindingRedirect")]
         public BindingRedirect[] BindingRedirects { get; set; }
+
+        private AssemblyIdentity _assemblyIdentity;
     }
 }

@@ -11,6 +11,12 @@ namespace WinUpdExplorer.Mum
         public string Ranking { get; set; }
 
         [XmlElement("assemblyIdentity")]
-        public AssemblyIdentity AssemblyIdentity { get; set; }
+        public AssemblyIdentity AssemblyIdentity
+        {
+            get { return _assemblyIdentity; }
+            set { _assemblyIdentity = AssemblyIdentityCatalog.Singleton.Register(value); }
+        }
+
+        private AssemblyIdentity _assemblyIdentity;
     }
 }

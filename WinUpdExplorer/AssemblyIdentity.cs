@@ -1,7 +1,7 @@
 ﻿using System.Xml;
 using System.Xml.Serialization;
 
-namespace WinUpdExplorer.Manifest
+namespace WinUpdExplorer
 {
     public class AssemblyIdentity
     {

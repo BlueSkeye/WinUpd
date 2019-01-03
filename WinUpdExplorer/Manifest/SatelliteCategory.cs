@@ -8,6 +8,12 @@ namespace WinUpdExplorer.Manifest
         [XmlAttribute("discoverable")]
         public bool Discoverable { get; set; }
         [XmlElement("id")]
-        public AssemblyIdentity Id { get; set; }
+        public AssemblyIdentity Id
+        {
+            get { return _assemblyIdentity; }
+            set { _assemblyIdentity = AssemblyIdentityCatalog.Singleton.Register(value); }
+        }
+
+        private AssemblyIdentity _assemblyIdentity;
     }
 }

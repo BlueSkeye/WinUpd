@@ -16,20 +16,25 @@ namespace WinUpdExplorer
             Initialize();
             // bool allConjectureStand = WsusScanParallelContentConjecture(); // UNUSED
             // Read the package.xml file from WSUSSCAN directory.
-            ReadPackage(); // Disconnected for tests speed-up
+            ReadPackage();
 
             // Build inter Update dependencies from package content.
             UpdateDependencyManager dependencyManager = new UpdateDependencyManager(_package);
-            dependencyManager.BuildDependencies(); // Disconnected for tests speed-up
+            dependencyManager.BuildDependencies();
 
             // Build updates details from the content of the core, extended and localized
             // sub-directories of WSUSSCAN.
-            ReadUpdatesDetails(); // Disconnected for tests speed-up
+            ReadUpdatesDetails();
 
-            ReadMainManifest(); // Disconnected for tests speed-up
-            DisplayMainManifestStatistics(); // Disconnected for tests speed-up
-            LoadPSFXManifests(); // Disconnected for tests speed-up
+            ReadMainManifest();
+            DisplayMainManifestStatistics();
+            LoadPSFXManifests();
             LoadMUMFiles();
+
+            // Display various statistics.
+            Console.WriteLine("{0} assembly identities were reused. {1} unique identities found.",
+                AssemblyIdentityCatalog.Singleton.ReuseCount, AssemblyIdentityCatalog.Singleton.UniqueCount);
+            // Display coompletion time.
             DateTime endTime = DateTime.Now;
             Console.WriteLine("Process completed in {0} secs.", (int)((endTime - startTime).TotalSeconds));
             return 0;
@@ -140,10 +145,11 @@ namespace WinUpdExplorer
             XmlSerializer asmV1Serializer = CreateStandardSerializer<Mum.AsmV1Assembly>();
             XmlSerializer asmV3Serializer = CreateStandardSerializer<Mum.AsmV3Assembly>();
             int successCount = 0;
+            _mumAssemblies = new List<Mum.AssemblyBase>();
             foreach (FileInfo candidate in _psfxDirectory.GetFiles("*.mum")) {
                 using (FileStream input = File.OpenRead(candidate.FullName)) {
                     XmlSerializer targetSerializer = FindRelevantSerializer(input, asmV1Serializer, asmV3Serializer);
-                    Mum.AssemblyBase assemblyManifest = (Mum.AssemblyBase)targetSerializer.Deserialize(input);
+                    _mumAssemblies.Add((Mum.AssemblyBase)targetSerializer.Deserialize(input));
                     if (_xmlParsingErrorEncountered) {
                         Console.WriteLine("{0} files succeeded", successCount);
                         input.DumpContent();
@@ -152,7 +158,7 @@ namespace WinUpdExplorer
                     successCount++;
                 }
             }
-            Console.WriteLine("{0} MUM files successfully parsed.", successCount);
+            Console.WriteLine("{0} MUM files successfully loaded.", successCount);
             return;
         }
 
@@ -161,10 +167,11 @@ namespace WinUpdExplorer
             XmlSerializer asmV1Serializer = CreateStandardSerializer<Manifest.AsmV1Assembly>();
             XmlSerializer asmV3Serializer = CreateStandardSerializer<Manifest.AsmV3Assembly>();
             int successCount = 0;
+            _psfxAssemblies = new List<Manifest.AssemblyBase>();
             foreach (FileInfo candidate in _psfxDirectory.GetFiles("*.manifest")) {
                 using (FileStream input = File.OpenRead(candidate.FullName)) {
                     XmlSerializer targetSerializer = FindRelevantSerializer(input, asmV1Serializer, asmV3Serializer);
-                    Manifest.AssemblyBase assemblyManifest = (Manifest.AssemblyBase)targetSerializer.Deserialize(input);
+                    _psfxAssemblies.Add((Manifest.AssemblyBase)targetSerializer.Deserialize(input));
                     if (_xmlParsingErrorEncountered) {
                         Console.WriteLine("{0} files succeeded", successCount);
                         input.DumpContent();
@@ -173,7 +180,7 @@ namespace WinUpdExplorer
                     successCount++;
                 }
             }
-            Console.WriteLine("{0} PSFX manifests successfully parsed.", successCount);
+            Console.WriteLine("{0} PSFX manifests successfully loaded.", successCount);
             return;
         }
 
@@ -310,9 +317,11 @@ namespace WinUpdExplorer
 
         private static DirectoryInfo _baseDirectory;
         private static Container _manifest;
+        private static List<Mum.AssemblyBase> _mumAssemblies;
         private static Packaging.Package _package;
         private static DirectoryInfo _packageDirectory;
         private static DirectoryInfo _psfxDirectory;
+        private static List<Manifest.AssemblyBase> _psfxAssemblies;
         private static bool _xmlParsingErrorEncountered;
         private static DirectoryInfo _wsusscanDirectory;
 
