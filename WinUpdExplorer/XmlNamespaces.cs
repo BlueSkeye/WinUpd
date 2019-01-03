@@ -1,4 +1,4 @@
-﻿namespace WinUpdExplorer.Manifest
+﻿namespace WinUpdExplorer
 {
     internal static class XmlNamespaces
     {

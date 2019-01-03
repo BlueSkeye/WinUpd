@@ -15,7 +15,7 @@ namespace WinUpdExplorer
             Initialize();
             // bool allConjectureStand = WsusScanParallelContentConjecture(); // UNUSED
             // Read the package.xml file from WSUSSCAN directory.
-            ReadPackage(); // Disconnected for tests speed-up
+            // ReadPackage(); // Disconnected for tests speed-up
 
             // Build inter Update dependencies from package content.
             //UpdateDependencyManager dependencyManager = new UpdateDependencyManager(_package);
@@ -25,9 +25,10 @@ namespace WinUpdExplorer
             // sub-directories of WSUSSCAN.
             // ReadUpdatesDetails(); // Disconnected for tests speed-up
 
-            ReadMainManifest();
-            // DisplayMainManifestStatistics();
-            LoadPSFXManifests();
+            // ReadMainManifest(); // Disconnected for tests speed-up
+            // DisplayMainManifestStatistics(); // Disconnected for tests speed-up
+            // LoadPSFXManifests(); // Disconnected for tests speed-up
+            LoadMUMFiles();
             return 0;
         }
 
@@ -127,9 +128,29 @@ namespace WinUpdExplorer
             finally { from.Position = 0; }
             // TODO : Unsafe in case of multibyte encoding.
             string data = Encoding.UTF8.GetString(buffer);
-            return (-1 != data.IndexOf(Manifest.XmlNamespaces.AssemblyV1))
+            return (-1 != data.IndexOf(XmlNamespaces.AssemblyV1))
                 ? asmV1Serializer
                 : asmV3Serializer;
+        }
+
+        private static void LoadMUMFiles()
+        {
+            XmlSerializer asmV1Serializer = CreateStandardSerializer<Mum.AsmV1Assembly>();
+            XmlSerializer asmV3Serializer = CreateStandardSerializer<Mum.AsmV3Assembly>();
+            int successCount = 0;
+            foreach (FileInfo candidate in _psfxDirectory.GetFiles("*.mum")) {
+                using (FileStream input = File.OpenRead(candidate.FullName)) {
+                    XmlSerializer targetSerializer = FindRelevantSerializer(input, asmV1Serializer, asmV3Serializer);
+                    Mum.AssemblyBase assemblyManifest = (Mum.AssemblyBase)targetSerializer.Deserialize(input);
+                    if (_xmlParsingErrorEncountered) {
+                        Console.WriteLine("{0} files succeeded", successCount);
+                        input.DumpContent();
+                        int i = 1;
+                    }
+                    successCount++;
+                }
+            }
+            return;
         }
 
         private static void LoadPSFXManifests()
