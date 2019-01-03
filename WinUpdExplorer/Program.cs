@@ -12,23 +12,26 @@ namespace WinUpdExplorer
     {
         public static int Main(string[] args)
         {
+            DateTime startTime = DateTime.Now;
             Initialize();
             // bool allConjectureStand = WsusScanParallelContentConjecture(); // UNUSED
             // Read the package.xml file from WSUSSCAN directory.
-            // ReadPackage(); // Disconnected for tests speed-up
+            ReadPackage(); // Disconnected for tests speed-up
 
             // Build inter Update dependencies from package content.
-            //UpdateDependencyManager dependencyManager = new UpdateDependencyManager(_package);
-            //dependencyManager.BuildDependencies(); // Disconnected for tests speed-up
+            UpdateDependencyManager dependencyManager = new UpdateDependencyManager(_package);
+            dependencyManager.BuildDependencies(); // Disconnected for tests speed-up
 
             // Build updates details from the content of the core, extended and localized
             // sub-directories of WSUSSCAN.
-            // ReadUpdatesDetails(); // Disconnected for tests speed-up
+            ReadUpdatesDetails(); // Disconnected for tests speed-up
 
-            // ReadMainManifest(); // Disconnected for tests speed-up
-            // DisplayMainManifestStatistics(); // Disconnected for tests speed-up
-            // LoadPSFXManifests(); // Disconnected for tests speed-up
+            ReadMainManifest(); // Disconnected for tests speed-up
+            DisplayMainManifestStatistics(); // Disconnected for tests speed-up
+            LoadPSFXManifests(); // Disconnected for tests speed-up
             LoadMUMFiles();
+            DateTime endTime = DateTime.Now;
+            Console.WriteLine("Process completed in {0} secs.", (int)((endTime - startTime).TotalSeconds));
             return 0;
         }
 
@@ -83,13 +86,12 @@ namespace WinUpdExplorer
             // Often a given item aggregates several files. Thus the dsplayed items count should be
             // expected to be significantly lower than the descriptors count from the _manifest member.
             // Combined language customization * files per descriptor can lead to 1/3 to 1/10 ratio.
-            Console.WriteLine("{0} items", totalAdditions);
-            foreach (KeyValuePair<string, Dictionary<UpdateItemFamily, List<string>>> pair in perArchitectureUpdateFamilies) {
-                Console.WriteLine(pair.Key);
-                foreach(KeyValuePair<UpdateItemFamily, List<string>> update in pair.Value) {
-                    Console.WriteLine("\t{0}v{1} #{2}", update.Key.SyntheticName, update.Key.Version, update.Value.Count);
-                }
-            }
+            //foreach (KeyValuePair<string, Dictionary<UpdateItemFamily, List<string>>> pair in perArchitectureUpdateFamilies) {
+            //    Console.WriteLine(pair.Key);
+            //    foreach(KeyValuePair<UpdateItemFamily, List<string>> update in pair.Value) {
+            //        Console.WriteLine("\t{0}v{1} #{2}", update.Key.SyntheticName, update.Key.Version, update.Value.Count);
+            //    }
+            //}
             return;
         }
 
@@ -150,6 +152,7 @@ namespace WinUpdExplorer
                     successCount++;
                 }
             }
+            Console.WriteLine("{0} MUM files successfully parsed.", successCount);
             return;
         }
 
@@ -170,6 +173,7 @@ namespace WinUpdExplorer
                     successCount++;
                 }
             }
+            Console.WriteLine("{0} PSFX manifests successfully parsed.", successCount);
             return;
         }
 
@@ -207,7 +211,6 @@ namespace WinUpdExplorer
                     Console.WriteLine("=========================");
                 }
                 else {
-                    Console.WriteLine("{0} files in base manifest", _manifest.Files.Length);
                     foreach(FileDescriptor descriptor in _manifest.Files) {
                         if (null == descriptor.Delta) { int k = 1; }
                         if (null == descriptor.Delta.Basis) {
@@ -229,6 +232,7 @@ namespace WinUpdExplorer
             using (FileStream input = File.OpenRead(Path.Combine(_wsusscanDirectory.FullName, "package.xml"))) {
                 _package = (Packaging.Package)serializer.Deserialize(input);
             }
+            Console.WriteLine("Package definition successfully loaded.");
             return;
         }
 
@@ -243,16 +247,18 @@ namespace WinUpdExplorer
 
             XmlSerializer coreSerializer = CreateStandardSerializer<Scanning.Core.UpdateCoreDetails>();
             XmlSerializer extendedSerializer = CreateStandardSerializer<Scanning.Extended.UpdateExtendedDetails>();
+            uint successCount = 0;
             foreach (uint updateId in _package.EnumerateUpdateIds()) {
-                if (2858 == updateId) { continue; }
+                if (2858 == updateId) { continue; } // TODO
                 Scanning.Core.UpdateCoreDetails coreDetails =
                     ReadWSUSScanUpdateDetails<Scanning.Core.UpdateCoreDetails>(coreSerializer, coreDirectory,
                         updateId, Scanning.Core.UpdateCoreDetails.RootNodeName);
                 Scanning.Extended.UpdateExtendedDetails extendedDetails =
                     ReadWSUSScanUpdateDetails<Scanning.Extended.UpdateExtendedDetails>(extendedSerializer, extendedDirectory,
                         updateId, Scanning.Extended.UpdateExtendedDetails.RootNodeName);
-                continue;
+                successCount++;
             }
+            Console.WriteLine("{0} details file successfully loaded.", successCount);
             return;
         }
 
@@ -266,7 +272,6 @@ namespace WinUpdExplorer
             using (XmlFragmentSerializationWrapper wrapper = new XmlFragmentSerializationWrapper(targetFile, rootNodeName, namespaces)) {
                 try {
                     _xmlParsingErrorEncountered = false;
-                    Console.WriteLine(id.ToString());
                     T result = (T) serializer.Deserialize(wrapper);
                     if (_xmlParsingErrorEncountered) {
                         wrapper.DumpContent();
